@@ -1,7 +1,9 @@
 import React from "react";
 import navLogo from "../assets/nav-logo.png";
 import navProfile from "../assets/nav-profile.png";
-import { BellIcon, MessageCircleMore } from "lucide-react";
+import { BellIcon, MessageCircleMore, CalendarSearchIcon } from "lucide-react";
+
+import { Link } from "react-router-dom";
 
 import Leo from "../assets/leo.png";
 
@@ -9,8 +11,15 @@ const Navbar = () => {
   return (
     <div className="bg-[#D9D9D9] w-full">
       <div className="flex justify-between items-center px-4 md:px-11 ">
-        <img src={navLogo} className="h-16 md:h-20" alt="Logo" />
+        <Link to="/dashboard">
+          <img src={navLogo} className="h-16 md:h-20" alt="Logo" />
+        </Link>
         <div className="flex gap-3 md:gap-5 items-center">
+          <Link to="/vet-map">
+            <div className="bg-white p-2 rounded-full">
+              <CalendarSearchIcon className="h-6 w-6 md:h-8 md:w-8" />
+            </div>
+          </Link>
           <div className="bg-white p-2 rounded-full">
             <BellIcon className="h-6 w-6 md:h-8 md:w-8" />
           </div>

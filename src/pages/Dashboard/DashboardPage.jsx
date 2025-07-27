@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 
-import Navbar from "../components/Navbar";
-import FaceCard from "../components/FaceCard";
+import Navbar from "../../components/Navbar";
+import FaceCard from "../../components/FaceCard";
+
+import NewPetModal from "./Modals/NewPetModal";
 
 import {
   PlusIcon,
@@ -12,10 +14,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import Leo from "../assets/leo.png";
+import Leo from "../../assets/leo.png";
 
 const DashboardPage = () => {
   const today = "Thursday, July 25"; // Static value for now
+
+  const [isOpenNewPetModal, setIsOpenNewPetModal] = useState(false);
 
   const appointments = [
     { time: "09:00 AM", name: "Deworming - Simba" },
@@ -27,7 +31,12 @@ const DashboardPage = () => {
   return (
     <div className="bg-[#b4b4b7] h-full">
       <Navbar />
+
       <div className="p-4">
+        <NewPetModal
+          isOpen={isOpenNewPetModal}
+          onClose={() => setIsOpenNewPetModal(false)}
+        />
         <div className="p-8 bg-[#d9d9d9] rounded-md">
           <div className=" grid grid-cols-1 md:grid-cols-2 mb-10">
             <div>
@@ -38,7 +47,11 @@ const DashboardPage = () => {
               <div className="flex flex-nowrap justify-center items-center text-10px bg-white p-2 rounded-lg hover:bg-gray-200">
                 <PlusIcon /> BOOK VET
               </div>
-              <div className="flex flex-nowrap justify-center items-center text-10px bg-white p-2 rounded-lg hover:bg-gray-200">
+
+              <div
+                onClick={() => setIsOpenNewPetModal(true)}
+                className="flex flex-nowrap justify-center items-center text-10px bg-white p-2 rounded-lg hover:bg-gray-200"
+              >
                 <PlusIcon /> NEW PET
               </div>
             </div>
