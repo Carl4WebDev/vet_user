@@ -1,19 +1,22 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 import Leo from "../assets/leo.png";
 
-const FaceCard = () => {
+const FaceCard = ({ petName, petId, petImage }) => {
   return (
-    <div className="w-40 h-60 relative flex items-center justify-center rounded-md">
-      <img
-        src={Leo}
-        className="w-full h-full object-cover rounded-md"
-        alt="Cat"
-      />
-      <h1 className="absolute bottom-2 bg-[#ffa673] p-2 rounded-md">
-        Hello Carl
-      </h1>
-    </div>
+    <Link to={`/pet-profile/${petId}`}>
+      <div className="w-16 h-24 sm:w-20 sm:h-30 md:w-40 md:h-60 relative flex items-center justify-center rounded-md">
+        <img
+          src={Leo}
+          className="w-full h-full object-cover rounded-md"
+          alt="Cat"
+        />
+        <h1 className="text-[8px] md:text-[19px] absolute bottom-2 bg-[#ffa673] p-2 rounded-md">
+          {petName}
+        </h1>
+      </div>
+    </Link>
   );
 };
 

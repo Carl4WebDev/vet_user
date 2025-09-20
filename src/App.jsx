@@ -1,22 +1,114 @@
-import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import ClientLogin from "./pages/ClientLogin";
+import ClientDashboard from "./pages/ClientDashboard/ClientDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import VetMap from "./pages/VetMap/VetMap";
+import ClientRegister from "./pages/ClientRegister";
+import ChatPage from "./pages/ChatPage";
+import PetProfilePage from "./pages/PetProfile/PetProfilePage";
+import AppointmentPage from "./pages/AppointmentPage";
+import OwnerProfile from "./pages/OwnerProfile/OwnerProfile";
+import NotificationPage from "./pages/NotificationPage";
+import MedicalHistory from "./components/MedicalHistory";
+import MedicalHistoryPage from "./pages/MedicalHistoryPage";
 
-import SigninPage from "./pages/SigninPage";
-import SignupPage from "./pages/SignupPage";
-import Dashboard from "./pages/Dashboard/DashboardPage";
-import VetMap from "./pages/VetMap";
-
-function App() {
+// Create a separate component for the routed content
+function AppContent() {
   return (
-    <Router>
-      <Routes>
-        <Route exact path="/" element={<SigninPage />} />
-        <Route exact path="/signup" element={<SignupPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/vet-map" element={<VetMap />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute guestOnly={true}>
+            <ClientLogin />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/client-register"
+        element={
+          <ProtectedRoute guestOnly={true}>
+            <ClientRegister />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Dashboard */}
+      <Route
+        path="/client-dashboard"
+        element={
+          <ProtectedRoute allowedRole="client">
+            <ClientDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pet-profile/:petId"
+        element={
+          <ProtectedRoute allowedRole="client">
+            <PetProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vet-map"
+        element={
+          <ProtectedRoute allowedRole="client" requirePets={true}>
+            <VetMap />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute allowedRole="client" requirePets={true}>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/appointment-details/:appointmentId"
+        element={
+          <ProtectedRoute allowedRole="client" requirePets={true}>
+            <AppointmentPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/owner-profile/:clientTableId"
+        element={
+          <ProtectedRoute allowedRole="client" requirePets={true}>
+            <OwnerProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute allowedRole="client" requirePets={true}>
+            <NotificationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/medical-history/:petId"
+        element={
+          <ProtectedRoute allowedRole="client" requirePets={true}>
+            <MedicalHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 
-export default App;
+// Main App component with Router
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
