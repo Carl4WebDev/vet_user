@@ -1,9 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 export async function getPetMedRecordsById(petId) {
-  const res = await fetch(
-    `${API_BASE}/medical-records/get-pet-records/${petId}`
-  );
+  const res = await fetch(`${API_BASE}/pets/get-pet-records/${petId}`);
 
   if (!res.ok) {
     throw new Error("Failed to fetch pet medical records data");

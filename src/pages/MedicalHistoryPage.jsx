@@ -9,12 +9,8 @@ import { clientNavItems } from "../config/navItems";
 const client_name = localStorage.getItem("client_name");
 
 import Navbar from "../components/Navbar";
-
-import html2canvas from "html2canvas";
-import html2pdf from "html2pdf.js";
-
-import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function MedicalHistoryPage() {
   const [records, setRecords] = useState([]);
@@ -41,46 +37,156 @@ export default function MedicalHistoryPage() {
     }
     fetchData();
   }, [petId]);
+  function downloadPDF(records) {
+    if (!records || records.length === 0) return;
 
-  function downloadPDF() {
-    const input = document.getElementById("pdf-content");
-    if (!input) return;
+    const pet = records[0];
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
 
-    toPng(input, { cacheBust: true })
-      .then((imgData) => {
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+    // 🐶 Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Pet Medical History", 14, 20);
 
-        // Calculate image ratio
-        const imgProps = new Image();
-        imgProps.src = imgData;
-        imgProps.onload = () => {
-          const imgWidth = pdfWidth;
-          const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Name: ${pet.pet_name || "N/A"}`, 14, 28);
+    doc.text(`Species: ${pet.pet_species || "N/A"}`, 14, 34);
+    doc.text(`Breed: ${pet.pet_breed || "N/A"}`, 14, 40);
+    doc.text(`Gender: ${pet.pet_gender || "N/A"}`, 100, 28);
+    doc.text(`Age: ${pet.pet_age || "N/A"} year(s)`, 100, 34);
+    doc.text(`Weight: ${pet.pet_weight || "N/A"} kg`, 100, 40);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 48);
 
-          let heightLeft = imgHeight;
-          let position = 0;
+    let currentY = 56;
 
-          // Add first page
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight;
+    // Loop through each medical record
+    records.forEach((rec, index) => {
+      // Record header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(`Record #${index + 1}`, 14, currentY);
+      currentY += 6;
 
-          // Add extra pages
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-            heightLeft -= pdfHeight;
-          }
-
-          pdf.save("medical-history.pdf");
-        };
-      })
-      .catch((err) => {
-        console.error("Failed to generate PDF:", err);
+      // 📅 Visit Info Table
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Visit Date", "Time", "Type", "Veterinarian"]],
+        body: [
+          [
+            rec.visit_date
+              ? new Date(rec.visit_date).toLocaleDateString()
+              : "N/A",
+            rec.visit_time || "N/A",
+            rec.visit_type || "N/A",
+            rec.veterinarian_name || "N/A",
+          ],
+        ],
+        styles: { fontSize: 10 },
+        theme: "grid",
       });
+      currentY = doc.lastAutoTable.finalY + 6;
+
+      // 🩺 Vital Signs Table
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Weight", "Temperature", "Heart Rate", "Resp. Rate"]],
+        body: [
+          [
+            rec.vital_weight || "N/A",
+            rec.vital_temperature || "N/A",
+            rec.vital_heart_rate || "N/A",
+            rec.vital_resp_rate || "N/A",
+          ],
+        ],
+        styles: { fontSize: 10 },
+        theme: "grid",
+      });
+      currentY = doc.lastAutoTable.finalY + 6;
+
+      // 🧪 Tests Table
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Fecal Examination", "Physical Examination"]],
+        body: [
+          [rec.fecal_examination || "N/A", rec.physical_examination || "N/A"],
+        ],
+        styles: { fontSize: 10 },
+        theme: "grid",
+      });
+      currentY = doc.lastAutoTable.finalY + 6;
+
+      // 💊 Medication Table
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Medication Given", "Prescriptions", "Treatment"]],
+        body: [
+          [
+            rec.medication_given || "N/A",
+            rec.prescriptions || "N/A",
+            rec.treatment || "N/A",
+          ],
+        ],
+        styles: { fontSize: 10 },
+        theme: "grid",
+      });
+      currentY = doc.lastAutoTable.finalY + 6;
+
+      // 🧠 Diagnosis Table
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Primary Diagnosis", "Body Condition", "Overall Health"]],
+        body: [
+          [
+            rec.primary_diagnosis || "N/A",
+            rec.body_condition || "N/A",
+            rec.overall_health || "N/A",
+          ],
+        ],
+        styles: { fontSize: 10 },
+        theme: "grid",
+      });
+      currentY = doc.lastAutoTable.finalY + 6;
+
+      // 📝 Notes Section
+      if (rec.description || rec.test_results || rec.key_action) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Notes & Actions", 14, currentY);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        currentY += 5;
+
+        doc.text(`Description: ${rec.description || "N/A"}`, 14, currentY, {
+          maxWidth: 180,
+        });
+        currentY += 5;
+
+        doc.text(`Test Results: ${rec.test_results || "N/A"}`, 14, currentY, {
+          maxWidth: 180,
+        });
+        currentY += 5;
+
+        doc.text(`Key Action: ${rec.key_action || "N/A"}`, 14, currentY, {
+          maxWidth: 180,
+        });
+        currentY += 8;
+      }
+
+      // Add a page if we get near the bottom
+      if (currentY > 250 && index !== records.length - 1) {
+        doc.addPage();
+        currentY = 20;
+      }
+    });
+
+    doc.save(`${pet.pet_name || "pet"}-medical-history.pdf`);
   }
+
   if (loading) {
     return <p className="text-center mt-10">Loading medical history...</p>;
   }
@@ -181,24 +287,26 @@ export default function MedicalHistoryPage() {
                   <div className="grid grid-cols-2 gap-6 text-center mt-4 ">
                     <div className="bg-white p-4 rounded shadow-sm">
                       <p className="text-gray-600 text-sm">Weight</p>
-                      <p className="font-bold text-lg">{rec.weight || "N/A"}</p>
+                      <p className="font-bold text-lg">
+                        {rec.pet_weight || "N/A"}
+                      </p>
                     </div>
                     <div className="bg-white p-4 rounded shadow-sm">
                       <p className="text-gray-600 text-sm">Temperature</p>
                       <p className="font-bold text-lg">
-                        {rec.temperature || "N/A"}
+                        {rec.vital_temperature || "N/A"}
                       </p>
                     </div>
                     <div className="bg-white p-4 rounded shadow-sm">
                       <p className="text-gray-600 text-sm">Heart Rate</p>
                       <p className="font-bold text-lg">
-                        {rec.heart_rate || "N/A"}
+                        {rec.vital_heart_rate || "N/A"}
                       </p>
                     </div>
                     <div className="bg-white p-4 rounded shadow-sm">
                       <p className="text-gray-600 text-sm">Resp. Rate</p>
                       <p className="font-bold text-lg">
-                        {rec.resp_rate || "N/A"}
+                        {rec.vital_resp_rate || "N/A"}
                       </p>
                     </div>
                   </div>
@@ -301,12 +409,14 @@ export default function MedicalHistoryPage() {
                 </div>
               </div>
 
-              <button
-                onClick={downloadPDF}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg shadow ml-4 mb-4 "
-              >
-                Print
-              </button>
+              <div className="p-4 flex justify-end w-full max-w-3xl">
+                <button
+                  onClick={() => downloadPDF(records)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg shadow"
+                >
+                  Download PDF
+                </button>
+              </div>
             </div>
           ))}
         </div>
