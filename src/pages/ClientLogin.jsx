@@ -116,7 +116,7 @@ export default function ClientLogin() {
                   Sign Up
                 </Link>
                 <a
-                  href="https://vet-ver1.netlify.app/"
+                  href="https://www.vetconnect.pro/"
                   className="w-6/12 bg-black text-white p-2 rounded-full font-semibold text-center hover:bg-gray-800 transition"
                 >
                   Clinic
