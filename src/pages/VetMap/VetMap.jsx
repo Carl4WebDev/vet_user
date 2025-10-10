@@ -12,6 +12,7 @@ import { clientNavItems } from "../../config/navItems";
 import { getAllClinics } from "../../api/get-api/clinics/getClinicsService.js";
 
 import { useClient } from "../../hooks/useClient.js";
+const navProfileClient = localStorage.getItem("navProfileClient");
 
 export default function VetMap() {
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ export default function VetMap() {
     <>
       <Navbar
         logo={NavLogo}
-        profileImg={NavProfile}
+        profileImg={navProfileClient || NavProfile}
         username={client?.name || "Guest"}
         navItems={clientNavItems}
       />

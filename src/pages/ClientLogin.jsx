@@ -109,18 +109,18 @@ export default function ClientLogin() {
               </button>
 
               <div className="flex gap-4 items-center mt-4 md:hidden">
-                <Link
-                  to="/client-register"
-                  className="w-6/12 bg-black text-white p-2 rounded-full font-semibold text-center hover:bg-gray-800 transition"
-                >
-                  Sign Up
-                </Link>
                 <a
                   href="https://www.vetconnect.pro/"
                   className="w-6/12 bg-black text-white p-2 rounded-full font-semibold text-center hover:bg-gray-800 transition"
                 >
                   Clinic
                 </a>
+                <Link
+                  to="/client-register"
+                  className="w-6/12 bg-black text-white p-2 rounded-full font-semibold text-center hover:bg-gray-800 transition"
+                >
+                  Sign Up
+                </Link>
               </div>
             </form>
           </div>

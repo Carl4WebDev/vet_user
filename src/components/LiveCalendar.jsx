@@ -24,7 +24,11 @@ export default function LiveCalendar({ appointments, image }) {
   return (
     <div className="bg-white rounded p-4">
       <h1 className="mb-4 font-bold text-lg sm:text-xl">Live Calendar</h1>
-
+      {!hasTodayAppointment && (
+        <h2 className="mb-4 font-bold text-lg sm:text-xl">
+          No Appointments today!
+        </h2>
+      )}
       {/* ✅ Only show if there is an appointment today */}
       {hasTodayAppointment && (
         <>

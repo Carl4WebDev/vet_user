@@ -7,13 +7,15 @@ import navProfile from "../assets/nav-profile.png";
 import { clientNavItems } from "../config/navItems";
 import { useClient } from "../hooks/useClient";
 import { getAllClinics } from "../api/get-api/clinics/getClinicsService.js";
-const API_BASE = import.meta.env.VITE_API_BASE;
 
-// Create socket connection outside component to prevent reconnects
+const API_BASE = import.meta.env.VITE_API_BASE;
+const navProfileClient = localStorage.getItem("navProfileClient");
+
+// ✅ Socket connection (outside component to avoid reconnects)
 const socket = io(`${API_BASE}`, {
   transports: ["websocket"],
   withCredentials: true,
-  autoConnect: false, // We'll manually connect after getting user ID
+  autoConnect: false,
 });
 
 export default function ChatPage() {
@@ -34,9 +36,7 @@ export default function ChatPage() {
       try {
         setLoading(true);
 
-        // Get client_id from localStorage (from your login system)
         const clientId = localStorage.getItem("client_id");
-
         if (!clientId) {
           setLoading(false);
           return;
@@ -44,32 +44,38 @@ export default function ChatPage() {
 
         setCurrentUser(clientId);
 
-        // Always connect socket on mount
+        // ✅ Connect socket if not already connected
         if (!socket.connected) {
           socket.connect();
         }
 
-        // Register user once socket is connected
+        // ✅ Register socket connection
         const onConnect = () => {
           socket.emit("registerUser", clientId);
           setIsConnected(true);
         };
-
         socket.on("connect", onConnect);
 
-        // Fetch users you can chat with
-        const availableUsers = await getAllClinics();
-        setUsers(availableUsers);
+        // ✅ Fetch clinics and build conversation list
+        const clinics = await getAllClinics();
+        if (Array.isArray(clinics)) {
+          setUsers(clinics);
 
-        const userConversations = availableUsers.map((user) => ({
-          id: user.id,
-          name: user.name,
-          avatar: user.avatar || null,
-          lastMessage: "Start a conversation...",
-        }));
-        setConversations(userConversations);
+          const userConversations = clinics.map((clinic) => ({
+            id: clinic.clinic_id,
+            name: clinic.clinic_name,
+            avatar: clinic.image_url || navProfile, // 🖼️ fallback if no image
+            lastMessage: "Start a conversation...",
+          }));
+
+          setConversations(userConversations);
+        } else {
+          console.warn("⚠️ Unexpected clinic data format:", clinics);
+          setConversations([]);
+        }
       } catch (error) {
-        console.error("Error initializing chat:", error);
+        console.error("❌ Error initializing chat:", error);
+        setConversations([]);
       } finally {
         setLoading(false);
       }
@@ -77,23 +83,24 @@ export default function ChatPage() {
 
     initializeChat();
 
-    // Cleanup on component unmount
+    // ✅ Cleanup
     return () => {
       socket.off("connect");
-      socket.disconnect(); // important to avoid ghost connections
+      socket.disconnect();
       setIsConnected(false);
     };
   }, []);
 
-  // Listen for socket events
+  // ✅ Listen for socket events
   useEffect(() => {
     if (!isConnected) return;
 
     const handleLoadMessages = (oldMessages) => {
-      setMessages(oldMessages);
+      setMessages(oldMessages || []);
     };
 
     const handleReceiveMessage = (message) => {
+      if (!message) return;
       setMessages((prev) => [...prev, message]);
 
       if (message.senderId !== currentUser) {
@@ -118,9 +125,7 @@ export default function ChatPage() {
 
   const selectConversation = (conversation) => {
     if (!currentUser || !isConnected) {
-      console.error(
-        "Cannot select conversation: User not registered or socket not connected"
-      );
+      console.error("Cannot select conversation: socket not ready");
       return;
     }
 
@@ -134,7 +139,7 @@ export default function ChatPage() {
 
   const sendMessage = () => {
     if (!input.trim() || !activeChat || !currentUser || !isConnected) {
-      console.error("Cannot send message: Missing requirements");
+      console.error("Cannot send message: missing data");
       return;
     }
 
@@ -148,6 +153,7 @@ export default function ChatPage() {
     setInput("");
   };
 
+  // ✅ Loading state
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100">
@@ -185,18 +191,18 @@ export default function ChatPage() {
       </div>
     );
   }
+
+  // ✅ UI
   return (
     <div>
       <Navbar
         logo={navLogo}
-        profileImg={navProfile}
+        profileImg={navProfileClient || navProfile}
         username={client?.name}
         navItems={clientNavItems}
       />
 
       <div className="flex h-screen bg-gray-100">
-        {/* Connection status indicator */}
-
         {/* Sidebar */}
         <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col">
           <div
@@ -206,6 +212,7 @@ export default function ChatPage() {
           >
             Messages
           </div>
+
           <div className="p-3 border-b border-gray-200">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -224,10 +231,11 @@ export default function ChatPage() {
               <input
                 type="text"
                 placeholder="Search conversations..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-100 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
           </div>
+
           <div className="flex-1 overflow-y-auto">
             {conversations.map((conv) => (
               <div
@@ -239,9 +247,9 @@ export default function ChatPage() {
               >
                 <div className="flex-shrink-0">
                   <img
-                    src={conv.avatar}
+                    src={conv.avatar || navProfile}
                     alt={conv.name}
-                    className="h-12 w-12 rounded-full"
+                    className="h-12 w-12 rounded-full object-cover border"
                   />
                 </div>
                 <div className="ml-3 min-w-0 flex-1">
@@ -265,9 +273,9 @@ export default function ChatPage() {
               <div className="flex items-center px-6 py-3 border-b border-gray-200 bg-white">
                 <div className="flex-shrink-0">
                   <img
-                    src={activeChat.avatar}
+                    src={activeChat.avatar || navProfile}
                     alt={activeChat.name}
-                    className="h-10 w-10 rounded-full"
+                    className="h-10 w-10 rounded-full object-cover border"
                   />
                 </div>
                 <div className="ml-3">
@@ -304,11 +312,11 @@ export default function ChatPage() {
                         <img
                           src={
                             msg.senderId === currentUser
-                              ? "/user-avatar.png"
-                              : activeChat.avatar
+                              ? navProfileClient || navProfile
+                              : activeChat.avatar || navProfile
                           }
                           alt="Avatar"
-                          className="h-8 w-8 rounded-full"
+                          className="h-8 w-8 rounded-full object-cover border"
                         />
                         <div
                           className={`${

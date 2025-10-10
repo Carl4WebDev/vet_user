@@ -10,6 +10,7 @@ import { clientNavItems } from "../config/navItems";
 import { getPetById } from "../api/pets/getPetById";
 
 const client_name = localStorage.getItem("client_name");
+const navProfileClient = localStorage.getItem("navProfileClient");
 
 export default function MedicalHistoryPage() {
   const [records, setRecords] = useState([]);
@@ -183,7 +184,7 @@ export default function MedicalHistoryPage() {
     <>
       <Navbar
         logo={navLogo}
-        profileImg={navProfile}
+        profileImg={navProfileClient || navProfile}
         username={client_name}
         navItems={clientNavItems}
       />

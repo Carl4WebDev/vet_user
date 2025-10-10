@@ -7,6 +7,9 @@ import { useAppointmentTypes } from "../../../hooks/useAppointmentTypes";
 import { useSuccess } from "../../../hooks/useSuccess";
 import { useError } from "../../../hooks/useError";
 
+// 🧩 Import API for veterinarians
+import { getVetByClinic } from "../../../api/getVetByClinic";
+
 export default function VetBookingModal({
   clinicName,
   isOpen,
@@ -19,6 +22,8 @@ export default function VetBookingModal({
   const [selectedVet, setSelectedVet] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [notes, setNotes] = useState("");
+  const [vets, setVets] = useState([]); // 🧠 Holds fetched veterinarians
+  const [loadingVets, setLoadingVets] = useState(false);
 
   const { showError } = useError();
   const { showSuccess } = useSuccess();
@@ -27,22 +32,57 @@ export default function VetBookingModal({
   const { availableSlots, fetchAvailableSlots, bookAppointment } =
     useAppointment();
 
-  // fetch slots on date change
+  // 🗓️ Fetch available slots on date/type change
   useEffect(() => {
-    if (selectedDate && selectedType) {
-      fetchAvailableSlots(1, selectedType, selectedDate);
-      setSelectedSlot(null); // reset selection when type changes
+    try {
+      if (selectedDate && selectedType) {
+        fetchAvailableSlots(1, selectedType, selectedDate);
+        setSelectedSlot(null); // reset slot when type/date changes
+      }
+    } catch (err) {
+      console.error("Error fetching available slots:", err);
+      showError("Unable to fetch available slots.");
     }
   }, [selectedDate, selectedType]);
 
-  // fetch pets + appointment types when modal opens
+  // 🐶 Fetch pets + appointment types when modal opens
   useEffect(() => {
-    const clientTableId = localStorage.getItem("client_table_id");
-    if (isOpen) {
-      fetchPets(clientTableId);
-      fetchAppointmentTypes();
+    try {
+      const clientTableId = localStorage.getItem("client_table_id");
+      if (isOpen) {
+        fetchPets(clientTableId);
+        fetchAppointmentTypes();
+      }
+    } catch (err) {
+      console.error("Error initializing booking modal:", err);
+      showError("Something went wrong loading your data.");
     }
   }, [isOpen, fetchPets, fetchAppointmentTypes]);
+
+  // 🩺 Fetch veterinarians for the clinic
+  useEffect(() => {
+    async function fetchVets() {
+      if (!clinicId || !isOpen) return;
+      try {
+        setLoadingVets(true);
+        const data = await getVetByClinic(clinicId);
+        if (Array.isArray(data)) {
+          setVets(data);
+        } else {
+          setVets([]);
+          console.warn("Unexpected vet data format:", data);
+        }
+      } catch (err) {
+        console.error("Error fetching veterinarians:", err);
+        showError("Failed to load veterinarians.");
+        setVets([]); // fallback safety
+      } finally {
+        setLoadingVets(false);
+      }
+    }
+
+    fetchVets();
+  }, [isOpen, clinicId]);
 
   if (!isOpen) return null;
 
@@ -50,13 +90,13 @@ export default function VetBookingModal({
     e.preventDefault();
     const clientTableId = localStorage.getItem("client_table_id");
 
+    // 🧱 Validation safety
     if (!selectedSlot || !selectedPet || !selectedType || !selectedVet) {
       showError("Please fill out all required fields.");
       return;
     }
 
     try {
-      console.log(clinicId);
       await bookAppointment({
         clientId: clientTableId,
         petId: selectedPet,
@@ -65,21 +105,22 @@ export default function VetBookingModal({
         date: selectedDate,
         startTime: selectedSlot.start,
         notes,
-        clinicId: clinicId,
+        clinicId,
       });
+
       showSuccess("✅ Appointment booked successfully!");
 
+      // Reset all selections safely
       setSelectedDate("");
       setSelectedSlot(null);
       setSelectedPet("");
       setSelectedVet("");
       setSelectedType("");
       setNotes("");
-
-      setSelectedSlot(null);
       onClose();
     } catch (err) {
       console.error("Booking failed:", err);
+      showError("Failed to book appointment. Try again.");
     }
   };
 
@@ -106,7 +147,7 @@ export default function VetBookingModal({
 
         <h2 className="text-sm font-light">Clinic</h2>
         <h3 className="font-bold mb-4">
-          {clinicName} -{" "}
+          {clinicName || "Clinic"} -{" "}
           <span className="text-[13px] font-light">
             Closed during Saturday-Sunday
           </span>
@@ -122,11 +163,15 @@ export default function VetBookingModal({
               onChange={(e) => setSelectedPet(e.target.value)}
             >
               <option value="">-- Select --</option>
-              {pets.map((pet) => (
-                <option key={pet.pet_id} value={pet.pet_id}>
-                  {pet.name}
-                </option>
-              ))}
+              {pets.length > 0 ? (
+                pets.map((pet) => (
+                  <option key={pet.pet_id} value={pet.pet_id}>
+                    {pet.name}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No pets available</option>
+              )}
             </select>
           </div>
 
@@ -137,9 +182,20 @@ export default function VetBookingModal({
               className="w-full border rounded px-2 py-1"
               value={selectedVet}
               onChange={(e) => setSelectedVet(e.target.value)}
+              disabled={loadingVets}
             >
               <option value="">-- Select --</option>
-              <option value={1}>Dr. Smith</option>
+              {loadingVets ? (
+                <option>Loading veterinarians...</option>
+              ) : vets.length > 0 ? (
+                vets.map((vet) => (
+                  <option key={vet.vet_id} value={vet.vet_id}>
+                    {vet.vet_name} ({vet.email})
+                  </option>
+                ))
+              ) : (
+                <option disabled>No veterinarians available</option>
+              )}
             </select>
           </div>
 
@@ -153,13 +209,18 @@ export default function VetBookingModal({
                 onChange={(e) => setSelectedType(e.target.value)}
               >
                 <option value="">-- Select --</option>
-                {appointmentTypes.map((type) => (
-                  <option key={type.type_id} value={type.type_id}>
-                    {type.name} - {type.duration_minutes}mins
-                  </option>
-                ))}
+                {appointmentTypes?.length > 0 ? (
+                  appointmentTypes.map((type) => (
+                    <option key={type.type_id} value={type.type_id}>
+                      {type.name} - {type.duration_minutes} mins
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No types available</option>
+                )}
               </select>
             </div>
+
             <div>
               <label className="block text-sm mb-1">Schedule Date:</label>
               <input
@@ -172,20 +233,24 @@ export default function VetBookingModal({
           </div>
 
           {/* Available Slots */}
-          {availableSlots.map((slot, index) => (
-            <button
-              type="button"
-              key={index}
-              onClick={() => setSelectedSlot(slot)}
-              className={`px-3 py-1 rounded border ${
-                selectedSlot?.start === slot.start
-                  ? "bg-cyan-500 text-white border-cyan-500"
-                  : "bg-gray-100 text-gray-700 border-gray-300"
-              }`}
-            >
-              {slot.start} - {slot.end}
-            </button>
-          ))}
+          {availableSlots?.length > 0 ? (
+            availableSlots.map((slot, index) => (
+              <button
+                type="button"
+                key={index}
+                onClick={() => setSelectedSlot(slot)}
+                className={`px-3 py-1 rounded border ${
+                  selectedSlot?.start === slot.start
+                    ? "bg-cyan-500 text-white border-cyan-500"
+                    : "bg-gray-100 text-gray-700 border-gray-300"
+                }`}
+              >
+                {slot.start} - {slot.end}
+              </button>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No slots available</p>
+          )}
 
           {/* Notes */}
           <div>
@@ -195,15 +260,17 @@ export default function VetBookingModal({
               className="w-full border rounded p-2"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              placeholder="(Optional)"
             />
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-2 rounded"
+            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-2 rounded disabled:bg-gray-400"
+            disabled={loadingVets}
           >
-            Schedule now
+            {loadingVets ? "Loading..." : "Schedule now"}
           </button>
         </form>
       </div>

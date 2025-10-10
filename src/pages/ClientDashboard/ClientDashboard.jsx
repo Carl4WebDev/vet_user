@@ -49,6 +49,18 @@ export default function ClientDashboard() {
     }
   }, [client?.clientId, fetchPets]);
 
+  useEffect(() => {
+    if (client?.clientId) {
+      // ✅ store globally (for all pages)
+      if (client.imageUrl) {
+        localStorage.setItem("navProfileClient", client.imageUrl);
+      }
+
+      // ✅ fetch pets as usual
+      fetchPets(client.clientId);
+    }
+  }, [client?.clientId, client?.imageUrl, fetchPets]);
+
   if (loading) return <p>Loading client...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!client) return <p>No client data found.</p>;

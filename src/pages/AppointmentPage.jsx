@@ -11,6 +11,7 @@ import { cancelAppointmentById } from "../api/appointments/cancelAppointmentById
 import { ArrowLeft } from "lucide-react";
 
 import VetRescheduleModal from "../components/VetRescheduleModal";
+const navProfileClient = localStorage.getItem("navProfileClient");
 
 export default function AppointmentPage() {
   const [appointment, setAppointment] = useState(null);
@@ -122,7 +123,7 @@ export default function AppointmentPage() {
       <div className="bg-[#d9d9d9] min-h-screen">
         <Navbar
           logo={navLogo}
-          profileImg={navProfile}
+          profileImg={navProfileClient || navProfile}
           username={client_name}
           navItems={clientNavItems}
         />
@@ -141,7 +142,7 @@ export default function AppointmentPage() {
       <div className="bg-[#d9d9d9] min-h-screen">
         <Navbar
           logo={navLogo}
-          profileImg={navProfile}
+          profileImg={navProfileClient || navProfile}
           username={client_name}
           navItems={clientNavItems}
         />
@@ -165,7 +166,7 @@ export default function AppointmentPage() {
     <div className="bg-[#d9d9d9] min-h-screen">
       <Navbar
         logo={navLogo}
-        profileImg={navProfile}
+        profileImg={navProfileClient || navProfile}
         username={client_name}
         navItems={clientNavItems}
       />
@@ -187,7 +188,7 @@ export default function AppointmentPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start mb-4">
           <img
-            src={appointment?.petImage || navProfile}
+            src={appointment?.pet_image_url || navProfile}
             alt={appointment?.pet_name || "Pet"}
             className="w-16 h-16 rounded-full mb-3 sm:mb-0 sm:mr-4"
           />

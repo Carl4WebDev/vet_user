@@ -20,7 +20,7 @@ export default function VetMapSidebar({ vets, showList }) {
           {vets.map((vet, i) => (
             <VetClinicCard
               key={i}
-              name={vet.name}
+              name={vet.clinic_name}
               rating={vet.rating || 5}
               address={vet.address}
               onBook={() => setSelectedClinic(vet)}
@@ -33,7 +33,7 @@ export default function VetMapSidebar({ vets, showList }) {
       {selectedClinic && (
         <VetBookingModal
           clinicName={selectedClinic.name}
-          clinicId={selectedClinic.id}
+          clinicId={selectedClinic.clinic_id}
           isOpen={!!selectedClinic}
           onClose={() => setSelectedClinic(null)}
         />
