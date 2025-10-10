@@ -88,9 +88,9 @@ export default function ClientDashboard() {
             <p>Welcome to your dashboard!</p>
           </div>
           <div className="flex gap-5 md:justify-end">
-            <button className="flex items-center gap-2 bg-white p-2 rounded-lg hover:bg-gray-200">
+            {/* <button className="flex items-center gap-2 bg-white p-2 rounded-lg hover:bg-gray-200">
               <PlusIcon /> BOOK VET
-            </button>
+            </button> */}
             <button
               onClick={() => setIsOpenNewPetModal(true)}
               className="flex items-center gap-2 bg-white p-2 rounded-lg hover:bg-gray-200"

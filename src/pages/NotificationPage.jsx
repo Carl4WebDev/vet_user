@@ -8,6 +8,8 @@ import navProfile from "../assets/nav-profile.png";
 const client_name = localStorage.getItem("client_name");
 import { clientNavItems } from "../config/navItems";
 
+const navProfileClient = localStorage.getItem("navProfileClient");
+
 export default function NotificationPage() {
   // Hardcoded notifications
   const notifications = [
@@ -35,7 +37,7 @@ export default function NotificationPage() {
     <>
       <Navbar
         logo={navLogo}
-        profileImg={navProfile}
+        profileImg={navProfileClient || navProfile}
         username={client_name}
         navItems={clientNavItems}
       />
