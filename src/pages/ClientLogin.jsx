@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginClient } from "../api/authService";
+import { forgotPassword } from "../api/forgotPassword"; // ✅ uses your backend route
 import SigninBg from "../assets/signinbg.png";
 import navLogo from "../assets/nav-logo.png";
 import { useError } from "../hooks/useError";
@@ -12,11 +13,15 @@ export default function ClientLogin() {
   const [accepted, setAccepted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotAnswer, setForgotAnswer] = useState("");
-  const [tempUser, setTempUser] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotKey, setForgotKey] = useState("");
+  const [recoveredPassword, setRecoveredPassword] = useState("");
   const [feedback, setFeedback] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const navigate = useNavigate();
 
+  // 🔐 Handle normal login
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -24,47 +29,38 @@ export default function ClientLogin() {
         setShowModal(true);
         return;
       }
-
-      // simulate failed login
-      if (!email.includes("@") || password.trim() === "") {
-        setTempUser(email);
-        showError("Invalid credentials — Try 'Forgot Password'?");
-        return;
-      }
-
       await loginClient(email, password);
       navigate("/client-dashboard");
     } catch (err) {
-      setTempUser(email);
       showError("Invalid credentials — Try 'Forgot Password'?");
     }
   };
 
-  const handleForgotSubmit = (e) => {
+  // 🔑 Handle forgot password (calls your backend)
+  const handleForgotSubmit = async (e) => {
     e.preventDefault();
-    const correctAnswer = tempUser.split("@")[0].toLowerCase();
-    if (forgotAnswer.toLowerCase() === correctAnswer) {
-      // ✅ Success
-      setEmail(tempUser);
-      setPassword("123456");
+    try {
+      const data = await forgotPassword(forgotEmail, forgotKey);
+
+      // ✅ backend returns { message, password }
+      setRecoveredPassword(data.password);
       setFeedback({
         type: "success",
         message:
-          "✅ Password reset successful! We've filled your account with default password 123456.",
+          "✅ Password reset successful! You can now use the new password below.",
       });
-      setShowForgotModal(false);
-    } else {
-      // ❌ Wrong answer
+    } catch (err) {
+      console.error(err);
       setFeedback({
         type: "error",
-        message: "❌ Incorrect answer. Please try again.",
+        message: "❌ Invalid email or secret key. Please try again.",
       });
     }
   };
 
   return (
     <div
-      className="w-full h-full bg-cover bg-center"
+      className="relative z-0 w-full h-full bg-cover bg-center" // ✅ added relative z-0 fix
       style={{ backgroundImage: `url(${SigninBg})` }}
     >
       <header className="bg-gray-200 flex items-center gap-2 px-6 py-3">
@@ -130,7 +126,6 @@ export default function ClientLogin() {
                 />
               </div>
 
-              {/* Forgot password link */}
               <p
                 onClick={() => setShowForgotModal(true)}
                 className="text-blue-600 text-sm cursor-pointer hover:underline"
@@ -196,7 +191,6 @@ export default function ClientLogin() {
               VetConnect Terms & Conditions
             </h2>
             <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
-              {/* keep your existing text */}
               Welcome to VetConnect, a digital platform designed to streamline
               veterinary practice management and enhance pet-owner healthcare
               engagement. By accessing or using the VetConnect System you
@@ -249,11 +243,7 @@ export default function ClientLogin() {
               updates will constitute acceptance of the revised terms. These
               Terms and Conditions shall be governed by the laws of the Republic
               of the Philippines, including the Data Privacy Act of 2012 and its
-              implementing rules and regulations. For any questions, concerns,
-              or requests regarding these Terms and Conditions or data privacy
-              matters, you may contact the VetConnect Data Protection Officer
-              (DPO) through the official email address or hotline provided
-              within the Application.
+              implementing rules and regulations.
             </p>
 
             <div className="flex justify-end gap-2 mt-6">
@@ -284,43 +274,94 @@ export default function ClientLogin() {
             <h2 className="text-xl font-bold mb-4 text-center">
               Forgot Password
             </h2>
-            {tempUser ? (
-              <form onSubmit={handleForgotSubmit} className="space-y-4">
-                <p className="text-gray-700 text-sm mb-2">
-                  🔒 Security Question:
-                </p>
-                <p className="font-medium text-gray-900">
-                  What are the letters before “@” in your email?
-                </p>
+
+            <form onSubmit={handleForgotSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email Address
+                </label>
                 <input
-                  type="text"
-                  value={forgotAnswer}
-                  onChange={(e) => setForgotAnswer(e.target.value)}
-                  placeholder="Enter your answer"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="Enter your email"
                   className="mt-2 w-full px-4 py-2 border rounded-md"
                   required
                 />
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotModal(false)}
-                    className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Submit
-                  </button>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Secret Key
+                </label>
+                <input
+                  type="text"
+                  value={forgotKey}
+                  onChange={(e) => setForgotKey(e.target.value)}
+                  placeholder="Enter your secret key"
+                  className="mt-2 w-full px-4 py-2 border rounded-md"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+            {recoveredPassword && (
+              <div className="mt-6 bg-gray-50 border border-gray-300 rounded-xl p-4 shadow-inner">
+                <p className="text-gray-700 font-medium mb-2 text-center">
+                  🔐 Your new password has been reset successfully!
+                </p>
+
+                <div className="flex items-center justify-between bg-white border border-gray-300 rounded-lg px-3 py-2">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={recoveredPassword}
+                    readOnly
+                    className="flex-1 outline-none bg-transparent font-mono text-gray-900 text-lg"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="text-sm text-gray-500 hover:text-black transition"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(recoveredPassword);
+                        setFeedback({
+                          type: "success",
+                          message: "Password copied to clipboard!",
+                        });
+                      }}
+                      className="text-sm text-blue-600 font-medium hover:underline"
+                    >
+                      Copy
+                    </button>
+                  </div>
                 </div>
-              </form>
-            ) : (
-              <p className="text-gray-600 text-center">
-                Please try to log in first with your email. The system will
-                record your email for password recovery.
-              </p>
+
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  Please keep your new password secure — you’ll need it to log
+                  in.
+                </p>
+              </div>
             )}
           </div>
         </div>
