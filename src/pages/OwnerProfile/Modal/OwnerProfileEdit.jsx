@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { editClientById } from "../../../api/get-api/client/editClient";
+import navProfile from "../../../assets/nav-profile.png";
 
 export default function OwnerProfileEdit({ isOpen, setIsOpen, clientId }) {
   const [formData, setFormData] = useState({
@@ -83,7 +84,7 @@ export default function OwnerProfileEdit({ isOpen, setIsOpen, clientId }) {
             {/* Gray background with optional uploaded image */}
             {bannerImage ? (
               <img
-                src={bannerImage}
+                src={navProfile}
                 alt="Banner"
                 className="absolute left-1/2 top-0 -translate-x-1/2 z-0 w-full md:w-[983px] h-[200px] md:h-[299px] rounded-[20px] object-cover"
               />
@@ -96,26 +97,14 @@ export default function OwnerProfileEdit({ isOpen, setIsOpen, clientId }) {
               <button
                 onClick={() => document.getElementById("bannerUpload").click()}
                 className="bg-white hover:bg-gray-200 text-black text-sm p-2 rounded-full shadow-md"
-              >
-                <img
-                  src="/edit.png"
-                  alt="Edit Banner"
-                  className="w-8 h-8" // Adjust size as needed
-                />
-              </button>
+              ></button>
 
               {/* Remove Banner Button */}
               {bannerImage && (
                 <button
                   onClick={() => setBannerImage(null)}
                   className="bg-white hover:bg-gray-200 text-black text-sm p-2 rounded-full shadow-md"
-                >
-                  <img
-                    src="/bin.png"
-                    alt="Remove Banner"
-                    className="w-8 h-8" // Adjust size as needed
-                  />
-                </button>
+                ></button>
               )}
             </div>
 

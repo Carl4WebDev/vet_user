@@ -111,11 +111,6 @@ export default function OwnerProfile() {
           {/* User Details */}
           <div className="ml-2 mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm w-full">
             <div className="flex justify-start gap-2 w-full">
-              <img
-                src="./id_icon.png"
-                alt=""
-                className="h-7 w-auto mt-3 mr-1"
-              />
               <div className="w-full">
                 <p className="text-black text-s font-regular">ID Number</p>
                 <p className="text-black text-m font-regular">
@@ -125,11 +120,6 @@ export default function OwnerProfile() {
             </div>
 
             <div className="flex items-start gap-2 w-full">
-              <img
-                src="./user_icon.png"
-                alt=""
-                className="h-5 w-auto mt-3 mr-1"
-              />
               <div className="w-full">
                 <p className="text-black text-s font-regular">Gender</p>
                 <p className="text-black text-m font-regular">
@@ -139,11 +129,6 @@ export default function OwnerProfile() {
             </div>
 
             <div className="flex items-start gap-2 w-full">
-              <img
-                src="./phone_icon.png"
-                alt=""
-                className="h-6 w-auto mt-3 mr-1"
-              />
               <div className="w-full">
                 <p className="text-black text-s font-regular">Phone Number</p>
                 <p className="text-black text-m font-regular">
@@ -153,11 +138,6 @@ export default function OwnerProfile() {
             </div>
 
             <div className="flex items-start gap-2 w-full">
-              <img
-                src="./phone_icon.png"
-                alt=""
-                className="h-6 w-auto mt-3 mr-1"
-              />
               <div className="w-full">
                 <p className="text-black text-s font-regular">Tel. Number</p>
                 <p className="text-black text-m font-regular">
@@ -167,11 +147,6 @@ export default function OwnerProfile() {
             </div>
 
             <div className="flex items-start gap-2 w-full">
-              <img
-                src="./email_icon.png"
-                alt=""
-                className="h-4 w-auto mt-3 mr-1"
-              />
               <div className="w-full">
                 <p className="text-black text-s font-regular">Email</p>
                 <p className="text-black text-m font-regular">
@@ -181,11 +156,6 @@ export default function OwnerProfile() {
             </div>
 
             <div className="flex items-start gap-2 w-full">
-              <img
-                src="./location_icon.png"
-                alt=""
-                className="h-6 w-auto mt-3 mr-1"
-              />
               <div className="w-full">
                 <p className="text-black text-s font-regular">Address</p>
                 <p className="text-black text-m font-regular">

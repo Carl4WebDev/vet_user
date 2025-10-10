@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginClient } from "../api/authService";
-
 import SigninBg from "../assets/signinbg.png";
 import navLogo from "../assets/nav-logo.png";
 import { useError } from "../hooks/useError";
@@ -10,11 +9,17 @@ export default function ClientLogin() {
   const { showError } = useError();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      if (!accepted) {
+        setShowModal(true);
+        return;
+      }
       await loginClient(email, password);
       navigate("/client-dashboard");
     } catch (err) {
@@ -61,7 +66,6 @@ export default function ClientLogin() {
               className="p-4 rounded-lg w-full mx-auto space-y-4"
             >
               <h2 className="text-xl font-bold text-center mb-4">Sign In</h2>
-              {/* {error && <p className="text-red-500 text-center">{error}</p>} */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -91,19 +95,33 @@ export default function ClientLogin() {
                 />
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  Remember me
-                </label>
-                <a href="#" className="text-blue-500 font-semibold">
-                  Forgot password?
-                </a>
+              <div className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  className="cursor-pointer"
+                />
+                <p>
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(true)}
+                    className="text-blue-600 underline"
+                  >
+                    Terms and Conditions
+                  </button>
+                </p>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2 rounded-full font-semibold hover:bg-gray-800 transition"
+                disabled={!accepted}
+                className={`w-full py-2 rounded-full font-semibold transition ${
+                  accepted
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                }`}
               >
                 Sign In
               </button>
@@ -126,6 +144,52 @@ export default function ClientLogin() {
           </div>
         </div>
       </div>
+
+      {/* 🧾 Terms Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+          <div className="bg-white max-w-3xl max-h-[80vh] overflow-y-auto rounded-lg shadow-xl p-6 relative">
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              VetConnect Terms & Conditions
+            </h2>
+            <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
+              {`Welcome to VetConnect, a digital platform designed to streamline veterinary practice management and enhance pet-owner healthcare engagement. By accessing or using the VetConnect System you acknowledge that you have read, understood, and agreed to comply with these Terms and Conditions, including our Privacy Policy, in compliance with the Data Privacy Act of 2012 (Republic Act No. 10173). If you do not agree with any of the provisions herein, you are advised to discontinue use of the Application.
+
+VetConnect provides services that include electronic health records management for pets, appointment scheduling and reminders, secure communication between veterinary clinics and pet owners, access to medical history and treatment notes, as well as business intelligence dashboards for veterinary practices. These services are intended solely for lawful purposes relating to veterinary care and practice management.
+
+As a user of the Application, you agree to provide accurate and up-to-date information at all times, to maintain the confidentiality of your login credentials, and to use the System responsibly and lawfully. You further agree not to misuse the Application in any way, including but not limited to unauthorized access, data manipulation, or any activity that may compromise the integrity of the platform.
+
+VetConnect is fully committed to protecting the privacy and confidentiality of its users in accordance with the Data Privacy Act of 2012. By using the System, you give explicit consent to the collection and processing of your personal information and sensitive personal information. Data collected will be limited only to what is necessary for veterinary care, appointment management, communication, and analytics. All collected information will be securely stored with appropriate encryption and access controls. Information will not be shared with third parties without your consent, except with authorized veterinary staff or as required by law. You retain the right to access, update, correct, or request deletion of your personal information, consistent with the provisions of RA 10173.
+
+While the Application provides tools to support communication and record-keeping, VetConnect does not provide direct veterinary advice and is not liable for any misdiagnosis, treatment errors, or medical outcomes. The accuracy of all information entered into the System is the sole responsibility of the user.
+
+All content, software, design elements, and intellectual property within the VetConnect Application are the exclusive property of VetConnect. These may not be copied, modified, distributed, or used in any form without prior written consent from the company.
+
+We reserve the right to suspend or terminate user accounts that violate these Terms and Conditions, engage in fraudulent or illegal activity, or compromise the security of the platform. Additionally, VetConnect may update or amend these Terms and Conditions at any time. Users will be notified of significant changes through email or in-app notifications, and continued use of the Application after such updates will constitute acceptance of the revised terms.
+
+These Terms and Conditions shall be governed by the laws of the Republic of the Philippines, including the Data Privacy Act of 2012 and its implementing rules and regulations.`}
+            </p>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setAccepted(true);
+                  setShowModal(false);
+                }}
+                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700"
+              >
+                I Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
