@@ -22,14 +22,16 @@ export default function OwnerProfile() {
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        // Assuming we have client ID stored or we can get it from somewhere
         const clientId = localStorage.getItem("client_id");
         if (!clientId) {
           throw new Error("Client ID not found");
         }
 
-        const data = await getClientById(clientId);
-        setClientData(data);
+        const response = await getClientById(clientId);
+
+        // ✅ unwrap safely based on your API
+        const clientInfo = response?.client || response || {};
+        setClientData(clientInfo);
       } catch (err) {
         console.error("Failed to fetch client data:", err);
         setError(err.message);
@@ -41,12 +43,18 @@ export default function OwnerProfile() {
     fetchClientData();
   }, [clientTableId]);
 
+  // ✅ Safe destructuring with fallbacks
+  const user = clientData || {};
+  const address = user.address || {};
+  const clinic = user.clinic || {};
+  const pets = Array.isArray(user.pets) ? user.pets : [];
+
   if (loading) {
     return (
       <>
         <Navbar
           logo={NavLogo}
-          profileImg={NavProfile}
+          profileImg={user.imageUrl || NavProfile}
           username={client_name || "Guest"}
           navItems={clientNavItems}
         />
@@ -61,7 +69,7 @@ export default function OwnerProfile() {
     <>
       <Navbar
         logo={NavLogo}
-        profileImg={NavProfile}
+        profileImg={user.imageUrl || NavProfile}
         username={client_name || "Guest"}
         navItems={clientNavItems}
       />
@@ -87,7 +95,7 @@ export default function OwnerProfile() {
           <div className="relative flex flex-col items-start md:flex-row md:items-start gap-6 -mt-25 w-full">
             {/* Profile Image */}
             <img
-              src="https://i.pravatar.cc/150?img=3"
+              src={user.imageUrl || NavProfile}
               alt="Profile"
               className="w-[200px] h-[200px] md:w-[200px] md:h-[200px] rounded-full border-4 border-white shadow-lg object-cover"
             />
@@ -95,12 +103,12 @@ export default function OwnerProfile() {
             {/* Name & Details */}
             <div className="flex-1 md:mt-30 w-full">
               <h2 className="md:text-3xl text-4xl font-semibold text-center mb-5 md:text-left w-full">
-                {clientData.client_name || "Not Specified"}
+                {user.name || "N/A"}
               </h2>
             </div>
           </div>
 
-          {/* UserDetails Section */}
+          {/* User Details */}
           <div className="ml-2 mt-4 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm w-full">
             <div className="flex justify-start gap-2 w-full">
               <img
@@ -111,7 +119,7 @@ export default function OwnerProfile() {
               <div className="w-full">
                 <p className="text-black text-s font-regular">ID Number</p>
                 <p className="text-black text-m font-regular">
-                  {clientData.user_id || "Not Specified"}
+                  {user.clientId || "N/A"}
                 </p>
               </div>
             </div>
@@ -125,7 +133,7 @@ export default function OwnerProfile() {
               <div className="w-full">
                 <p className="text-black text-s font-regular">Gender</p>
                 <p className="text-black text-m font-regular">
-                  {clientData.gender || "Not Specified"}
+                  {user.gender || "N/A"}
                 </p>
               </div>
             </div>
@@ -139,7 +147,7 @@ export default function OwnerProfile() {
               <div className="w-full">
                 <p className="text-black text-s font-regular">Phone Number</p>
                 <p className="text-black text-m font-regular">
-                  {clientData.phone || "Not Specified"}
+                  {user.phone || "N/A"}
                 </p>
               </div>
             </div>
@@ -153,7 +161,7 @@ export default function OwnerProfile() {
               <div className="w-full">
                 <p className="text-black text-s font-regular">Tel. Number</p>
                 <p className="text-black text-m font-regular">
-                  {clientData.tel_num || "Not Specified"}
+                  {user.telNum || "N/A"}
                 </p>
               </div>
             </div>
@@ -167,7 +175,7 @@ export default function OwnerProfile() {
               <div className="w-full">
                 <p className="text-black text-s font-regular">Email</p>
                 <p className="text-black text-m font-regular">
-                  {clientData.email || "Not Specified"}
+                  {user?.email || "N/A"}
                 </p>
               </div>
             </div>
@@ -180,7 +188,10 @@ export default function OwnerProfile() {
               />
               <div className="w-full">
                 <p className="text-black text-s font-regular">Address</p>
-                <p className="text-black text-m font-regular">{`${clientData.street}-${clientData.city}-${clientData.province}-${clientData.postal_code}-${clientData.country}-${clientData.unit_number}`}</p>
+                <p className="text-black text-m font-regular">
+                  {address.street || "N/A"} - {address.city || "N/A"} -{" "}
+                  {address.province || "N/A"} - {address.postal_code || "N/A"}
+                </p>
               </div>
             </div>
           </div>
@@ -188,9 +199,7 @@ export default function OwnerProfile() {
           {/* Bio */}
           <div className="mt-6 w-full">
             <h3 className="font-medium text-xl mb-2">Bio</h3>
-            <p className="text-gray-600 text-m w-full">
-              {clientData.bio || "Not Specified"}
-            </p>
+            <p className="text-gray-600 text-m w-full">{user.bio || "N/A"}</p>
           </div>
 
           {/* Statistics */}
@@ -226,7 +235,9 @@ export default function OwnerProfile() {
               <div className="relative bg-white shadow rounded-lg p-3 text-center overflow-hidden w-full">
                 <div className="absolute top-0 left-0 w-full h-[10px] bg-gradient-to-b from-[#477B36] via-[#477B36]"></div>
                 <p className="text-[#477B36] text-m mt-1">Number of Pets</p>
-                <p className="text-3xl font-semibold mt-10">3</p>
+                <p className="text-3xl font-semibold mt-10">
+                  {pets.length || "0"}
+                </p>
               </div>
 
               {/* Card 5 - Cancelled Appointments */}

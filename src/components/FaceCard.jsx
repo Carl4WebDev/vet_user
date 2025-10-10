@@ -8,7 +8,7 @@ const FaceCard = ({ petName, petId, petImage }) => {
     <Link to={`/pet-profile/${petId}`}>
       <div className="w-16 h-24 sm:w-20 sm:h-30 md:w-40 md:h-60 relative flex items-center justify-center rounded-md">
         <img
-          src={Leo}
+          src={petImage || Leo}
           className="w-full h-full object-cover rounded-md"
           alt="Cat"
         />

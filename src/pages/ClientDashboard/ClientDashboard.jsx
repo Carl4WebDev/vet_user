@@ -26,7 +26,6 @@ export default function ClientDashboard() {
 
   const { client, loading, error, fetchClient } = useClient();
   const { pets, fetchPets } = usePets();
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -53,13 +52,12 @@ export default function ClientDashboard() {
   if (loading) return <p>Loading client...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!client) return <p>No client data found.</p>;
-
   return (
     <div className="bg-[#b4b4b7] min-h-screen">
       <VetClinicChatbot />
       <Navbar
         logo={navLogo}
-        profileImg={navProfile}
+        profileImg={client.imageUrl || navProfile}
         username={client.name}
         navItems={clientNavItems}
       />
@@ -96,7 +94,7 @@ export default function ClientDashboard() {
               key={index}
               petName={pet.name}
               petId={pet.pet_id}
-              petImage={""}
+              petImage={pet.image_url}
             />
           ))}
         </div>
@@ -115,7 +113,7 @@ export default function ClientDashboard() {
                 day: "numeric",
               })}
               time={`${appt.start_time} - ${appt.end_time}`}
-              image={Leo}
+              image={appt.pet_image_url || Leo}
               appointmentId={appt.appointment_id}
             />
           ))}

@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { getPetMedRecordsById } from "../api/medicalRecords/getPetMedRecordsById";
-
 import { useParams } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
+import Navbar from "../components/Navbar";
 import navLogo from "../assets/nav-logo.png";
 import navProfile from "../assets/nav-profile.png";
 import { clientNavItems } from "../config/navItems";
-const client_name = localStorage.getItem("client_name");
+import { getPetById } from "../api/pets/getPetById";
 
-import Navbar from "../components/Navbar";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+const client_name = localStorage.getItem("client_name");
 
 export default function MedicalHistoryPage() {
   const [records, setRecords] = useState([]);
@@ -18,36 +17,33 @@ export default function MedicalHistoryPage() {
   const [error, setError] = useState(null);
 
   const { petId } = useParams();
-  // For now, hardcode a petId (later you can get it from params or props)
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await getPetMedRecordsById(petId);
-        if (res.success) {
+        const res = await getPetById(petId);
+        if (res.success && Array.isArray(res.data)) {
           setRecords(res.data);
         } else {
-          setError("Failed to load records");
+          setError("No medical records found.");
         }
       } catch (err) {
-        console.error(err);
-        setError("Error fetching medical records");
+        console.error("❌ Error fetching pet records:", err);
+        setError("Failed to load medical records.");
       } finally {
         setLoading(false);
       }
     }
     fetchData();
   }, [petId]);
+
+  // 📄 Download as PDF
   function downloadPDF(records) {
     if (!records || records.length === 0) return;
-
     const pet = records[0];
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
+    const doc = new jsPDF("p", "mm", "a4");
 
-    // 🐶 Header
+    // Header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("Pet Medical History", 14, 20);
@@ -64,15 +60,13 @@ export default function MedicalHistoryPage() {
 
     let currentY = 56;
 
-    // Loop through each medical record
     records.forEach((rec, index) => {
-      // Record header
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.text(`Record #${index + 1}`, 14, currentY);
       currentY += 6;
 
-      // 📅 Visit Info Table
+      // Visit Info
       autoTable(doc, {
         startY: currentY,
         head: [["Visit Date", "Time", "Type", "Veterinarian"]],
@@ -86,12 +80,12 @@ export default function MedicalHistoryPage() {
             rec.veterinarian_name || "N/A",
           ],
         ],
-        styles: { fontSize: 10 },
         theme: "grid",
+        styles: { fontSize: 10 },
       });
       currentY = doc.lastAutoTable.finalY + 6;
 
-      // 🩺 Vital Signs Table
+      // Vital Signs
       autoTable(doc, {
         startY: currentY,
         head: [["Weight", "Temperature", "Heart Rate", "Resp. Rate"]],
@@ -103,24 +97,24 @@ export default function MedicalHistoryPage() {
             rec.vital_resp_rate || "N/A",
           ],
         ],
-        styles: { fontSize: 10 },
         theme: "grid",
+        styles: { fontSize: 10 },
       });
       currentY = doc.lastAutoTable.finalY + 6;
 
-      // 🧪 Tests Table
+      // Tests
       autoTable(doc, {
         startY: currentY,
         head: [["Fecal Examination", "Physical Examination"]],
         body: [
           [rec.fecal_examination || "N/A", rec.physical_examination || "N/A"],
         ],
-        styles: { fontSize: 10 },
         theme: "grid",
+        styles: { fontSize: 10 },
       });
       currentY = doc.lastAutoTable.finalY + 6;
 
-      // 💊 Medication Table
+      // Medication
       autoTable(doc, {
         startY: currentY,
         head: [["Medication Given", "Prescriptions", "Treatment"]],
@@ -131,12 +125,12 @@ export default function MedicalHistoryPage() {
             rec.treatment || "N/A",
           ],
         ],
-        styles: { fontSize: 10 },
         theme: "grid",
+        styles: { fontSize: 10 },
       });
       currentY = doc.lastAutoTable.finalY + 6;
 
-      // 🧠 Diagnosis Table
+      // Diagnosis
       autoTable(doc, {
         startY: currentY,
         head: [["Primary Diagnosis", "Body Condition", "Overall Health"]],
@@ -147,38 +141,32 @@ export default function MedicalHistoryPage() {
             rec.overall_health || "N/A",
           ],
         ],
-        styles: { fontSize: 10 },
         theme: "grid",
+        styles: { fontSize: 10 },
       });
       currentY = doc.lastAutoTable.finalY + 6;
 
-      // 📝 Notes Section
-      if (rec.description || rec.test_results || rec.key_action) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("Notes & Actions", 14, currentY);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        currentY += 5;
+      // Notes
+      doc.setFont("helvetica", "bold");
+      doc.text("Notes & Actions", 14, currentY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      currentY += 5;
 
-        doc.text(`Description: ${rec.description || "N/A"}`, 14, currentY, {
-          maxWidth: 180,
-        });
-        currentY += 5;
+      doc.text(`Description: ${rec.description || "N/A"}`, 14, currentY, {
+        maxWidth: 180,
+      });
+      currentY += 5;
+      doc.text(`Test Results: ${rec.test_results || "N/A"}`, 14, currentY, {
+        maxWidth: 180,
+      });
+      currentY += 5;
+      doc.text(`Key Action: ${rec.key_action || "N/A"}`, 14, currentY, {
+        maxWidth: 180,
+      });
+      currentY += 8;
 
-        doc.text(`Test Results: ${rec.test_results || "N/A"}`, 14, currentY, {
-          maxWidth: 180,
-        });
-        currentY += 5;
-
-        doc.text(`Key Action: ${rec.key_action || "N/A"}`, 14, currentY, {
-          maxWidth: 180,
-        });
-        currentY += 8;
-      }
-
-      // Add a page if we get near the bottom
-      if (currentY > 250 && index !== records.length - 1) {
+      if (currentY > 260 && index !== records.length - 1) {
         doc.addPage();
         currentY = 20;
       }
@@ -187,13 +175,9 @@ export default function MedicalHistoryPage() {
     doc.save(`${pet.pet_name || "pet"}-medical-history.pdf`);
   }
 
-  if (loading) {
+  if (loading)
     return <p className="text-center mt-10">Loading medical history...</p>;
-  }
-
-  if (error) {
-    return <p className="text-center mt-10 text-red-500">{error}</p>;
-  }
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
   return (
     <>
@@ -203,7 +187,6 @@ export default function MedicalHistoryPage() {
         username={client_name}
         navItems={clientNavItems}
       />
-
       <div
         id="pdf-content"
         className="bg-white shadow-lg w-full max-w-[1100px] mx-auto rounded-xl overflow-hidden border border-gray-300"
@@ -213,11 +196,8 @@ export default function MedicalHistoryPage() {
           style={{ backgroundColor: "#f6f6f6" }}
         >
           <div className="self-start mb-10">
-            <label
-              htmlFor="PetsMedHistory"
-              className=" text-left text-2xl font-semibold "
-            >
-              Leo&apos;s Medical History
+            <label className="text-left text-2xl font-semibold">
+              {records[0]?.pet_name || "Pet"}&apos;s Medical History
             </label>
           </div>
 
@@ -226,16 +206,18 @@ export default function MedicalHistoryPage() {
               key={rec.record_id}
               className="bg-white shadow-lg w-full max-w-3xl mb-8"
             >
-              {/* Header */}
               <div className="bg-blue-600 text-white text-lg font-semibold p-4 text-center">
                 Medical History #{index + 1}
               </div>
 
-              {/* Visit Info Top Section */}
               <div className="mt-5 bg-[#D9D9D9] w-full max-w-[750px] mx-auto rounded-xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 text-center">
                 <div>
                   <p className="text-gray-500 text-sm">Visit Date</p>
-                  <p className="font-semibold">{rec.visit_date || "N/A"}</p>
+                  <p className="font-semibold">
+                    {rec.visit_date
+                      ? new Date(rec.visit_date).toLocaleDateString()
+                      : "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">Time</p>
@@ -251,44 +233,34 @@ export default function MedicalHistoryPage() {
                 </div>
               </div>
 
-              {/* Main Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-10">
-                {/* Visit Information */}
-                <div
-                  className=" p-4 rounded-lg shadow"
-                  style={{ backgroundColor: "#f6f6f6" }}
-                >
-                  <h3 className="font-semibold mb-2 border-b border-[000000] ">
+                {/* Visit Info */}
+                <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
+                  <h3 className="font-semibold mb-2 border-b">
                     Visit Information
                   </h3>
                   <p>
                     <span className="font-semibold">Veterinarian:</span>{" "}
-                    <br className="mb-1" />
                     {rec.veterinarian_name || "N/A"}
                   </p>
                   <p>
                     <span className="font-semibold">Chief Complaint:</span>{" "}
-                    <br className="mb-1" /> {rec.chief_complaint || "N/A"}
+                    {rec.chief_complaint || "N/A"}
                   </p>
                   <p>
                     <span className="font-semibold">Visit Reason:</span>{" "}
-                    <br className="mb-1" /> {rec.visit_reason || "N/A"}
+                    {rec.visit_reason || "N/A"}
                   </p>
                 </div>
 
-                {/* Vital Signs */}
-                <div
-                  className=" p-4 rounded-lg shadow"
-                  style={{ backgroundColor: "#f6f6f6" }}
-                >
-                  <h3 className="font-semibold mb-2 border-b border-[000000] ">
-                    Vital Signs
-                  </h3>
-                  <div className="grid grid-cols-2 gap-6 text-center mt-4 ">
+                {/* Vitals */}
+                <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
+                  <h3 className="font-semibold mb-2 border-b">Vital Signs</h3>
+                  <div className="grid grid-cols-2 gap-6 text-center mt-4">
                     <div className="bg-white p-4 rounded shadow-sm">
                       <p className="text-gray-600 text-sm">Weight</p>
                       <p className="font-bold text-lg">
-                        {rec.pet_weight || "N/A"}
+                        {rec.vital_weight || "N/A"}
                       </p>
                     </div>
                     <div className="bg-white p-4 rounded shadow-sm">
@@ -313,99 +285,60 @@ export default function MedicalHistoryPage() {
                 </div>
               </div>
 
-              {/* Tests and Treatments */}
+              {/* Tests + Treatment */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-10">
-                <div
-                  className="  p-4 rounded-lg shadow "
-                  style={{ backgroundColor: "#f6f6f6" }}
-                >
-                  <h3 className="font-semibold mb-2 border-b border-[000000] ">
+                <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
+                  <h3 className="font-semibold mb-2 border-b">
                     Test and Procedures
                   </h3>
-                  <p className="mb-10">
-                    <span className="font-semibold mr-25  ">
-                      Fecal Examination:
-                    </span>
+                  <p>
+                    <strong>Fecal Examination:</strong>{" "}
                     {rec.fecal_examination || "N/A"}
                   </p>
-                  <p className="mb-20">
-                    <span className="font-semibold mr-32">Physical Exam:</span>
+                  <p>
+                    <strong>Physical Exam:</strong>{" "}
                     {rec.physical_examination || "N/A"}
                   </p>
                 </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg shadow">
-                  <h3 className="font-semibold mb-2 border-b border-[000000] ">
+                <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
+                  <h3 className="font-semibold mb-2 border-b">
                     Treatment and Medication
                   </h3>
-                  <p className="mb-10">
-                    <span className="font-semibold mr-32">
-                      Medication Given:
-                    </span>
+                  <p>
+                    <strong>Medication Given:</strong>{" "}
                     {rec.medication_given || "N/A"}
                   </p>
-                  <p className="mb-10">
-                    <span className="font-semibold mr-40">Prescriptions:</span>
-                    {rec.prescriptions || "N/A"}
+                  <p>
+                    <strong>Prescriptions:</strong> {rec.prescriptions || "N/A"}
                   </p>
                   <p>
-                    <span className="font-semibold mr-20">Treatment:</span>
-                    {rec.treatment || "N/A"}
+                    <strong>Treatment:</strong> {rec.treatment || "N/A"}
                   </p>
                 </div>
               </div>
 
-              {/* Diagnosis and Documents */}
+              {/* Diagnosis */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-10">
-                <div
-                  className="  p-4 rounded-lg shadow"
-                  style={{ backgroundColor: "#f6f6f6" }}
-                >
-                  <h3 className="font-semibold mb-2 border-b border-[000000] ">
+                <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
+                  <h3 className="font-semibold mb-2 border-b">
                     Diagnosis and Assessment
                   </h3>
-                  <p className="mb-10">
-                    <span className="font-semibold mr-25">
-                      Primary Diagnosis:
-                    </span>
+                  <p>
+                    <strong>Primary Diagnosis:</strong>{" "}
                     {rec.primary_diagnosis || "N/A"}
                   </p>
-                  <p className="mb-10">
-                    <span className="font-semibold mr-27">Body Condition:</span>{" "}
+                  <p>
+                    <strong>Body Condition:</strong>{" "}
                     {rec.body_condition || "N/A"}
                   </p>
-                  <p className="mb-10">
-                    <span className="font-semibold mr-30 ">
-                      Overall Health:
-                    </span>
+                  <p>
+                    <strong>Overall Health:</strong>{" "}
                     {rec.overall_health || "N/A"}
                   </p>
                 </div>
-                <div
-                  className="  p-4 rounded-lg shadow"
-                  style={{ backgroundColor: "#f6f6f6" }}
-                >
-                  <h3 className="font-semibold mb-2 border-b border-[000000] ">
-                    Documents
-                  </h3>
-                  {rec.documents && rec.documents.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {rec.documents.map((doc, i) => (
-                        <li key={i}>
-                          <a
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            Document {i + 1}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No documents available</p>
-                  )}
+                <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
+                  <h3 className="font-semibold mb-2 border-b">Notes</h3>
+                  <p>{rec.description || rec.notes || "N/A"}</p>
                 </div>
               </div>
 

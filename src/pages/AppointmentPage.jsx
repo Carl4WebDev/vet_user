@@ -187,7 +187,7 @@ export default function AppointmentPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start mb-4">
           <img
-            src={appointment?.petImage || "/Cat_Image.png"}
+            src={appointment?.petImage || navProfile}
             alt={appointment?.pet_name || "Pet"}
             className="w-16 h-16 rounded-full mb-3 sm:mb-0 sm:mr-4"
           />

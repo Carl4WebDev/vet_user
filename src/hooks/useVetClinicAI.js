@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const apiKey = import.meta.env.VITE_REACT_APP_GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.error(
+    "❌ Gemini API key is missing. Did you set VITE_GEMINI_API_KEY in .env?"
+  );
+}
+
 const useVetClinicAI = () => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Initialize with your API key
-  // const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
-  const genAI = new GoogleGenerativeAI(
-    "AIzaSyA9JRXjrS3PbtHL5wwP0ew_6PEvCFcVoAU"
-  );
+  const genAI = new GoogleGenerativeAI(apiKey);
 
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-exp",

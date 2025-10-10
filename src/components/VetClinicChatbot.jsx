@@ -13,6 +13,28 @@ const VetClinicChatbot = () => {
     y: window.innerHeight - 80,
   });
 
+  // ✅ Keep icon visible when screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIconPos((prev) => {
+        const maxX = window.innerWidth - 60;
+        const maxY = window.innerHeight - 60;
+        return {
+          x: Math.min(prev.x, maxX),
+          y: Math.min(prev.y, maxY),
+        };
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, []);
+
   // 🧠 Drag refs
   const iconRef = useRef(null);
   const dragRef = useRef({
@@ -27,6 +49,14 @@ const VetClinicChatbot = () => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+
+    // ✅ Cleanup on unmount (prevents duplicate listeners)
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", endDrag);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", endDrag);
+    };
   }, [messages, isLoading, isOpen]);
 
   const handleSubmit = (e) => {
@@ -34,6 +64,14 @@ const VetClinicChatbot = () => {
     if (!input.trim()) return;
     sendMessage(input.trim());
     setInput("");
+  };
+
+  // ✅ Helper to remove listeners before adding new ones
+  const cleanupDragListeners = () => {
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", endDrag);
+    document.removeEventListener("touchmove", handleTouchMove);
+    document.removeEventListener("touchend", endDrag);
   };
 
   // 🧲 Start dragging (both mouse & touch)
@@ -46,6 +84,9 @@ const VetClinicChatbot = () => {
     dragRef.current.startX = clientX;
     dragRef.current.startY = clientY;
     dragRef.current.dragging = false;
+
+    // ✅ Remove previous listeners first
+    cleanupDragListeners();
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", endDrag);
@@ -74,10 +115,7 @@ const VetClinicChatbot = () => {
   };
 
   const endDrag = (e) => {
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", endDrag);
-    document.removeEventListener("touchmove", handleTouchMove);
-    document.removeEventListener("touchend", endDrag);
+    cleanupDragListeners(); // ✅ Prevent duplicate handlers
 
     // 🖐 If no drag happened → treat as click
     if (!dragRef.current.dragging) {

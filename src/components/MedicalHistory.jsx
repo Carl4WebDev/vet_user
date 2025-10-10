@@ -16,7 +16,7 @@ export default function MedicalHistory({ pets }) {
             >
               <div className="flex items-center gap-4">
                 <img
-                  src={pet.image || "/default-pet.png"} // fallback if no image
+                  src={pet.image_url || "/default-pet.png"} // fallback if no image
                   alt={pet.name}
                   className="w-16 h-16 rounded-full object-cover"
                 />
@@ -24,7 +24,7 @@ export default function MedicalHistory({ pets }) {
                   <h1 className="font-semibold">{pet.name}</h1>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <TimerIcon size={16} />
-                    <p>{pet.recordCount || 0} Records</p>
+                    <p>{pet.medical_record_count || 0} Records</p>
                   </div>
                 </div>
               </div>
