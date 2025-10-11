@@ -73,13 +73,13 @@ export default function PetProfilePage() {
   if (loading) return <p>Loading pet data...</p>;
   if (!petRecords.length)
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <p className="text-3xl font-bold text-gray-600 tracking-wide">
-          No Data Available
-        </p>
-        <p className="text-lg text-gray-400 mt-2">
-          Once you add a record, it will appear here.
-        </p>
+      <div className="flex items-center justify-center">
+        <div className="p-6 border border-gray-200 rounded-xl shadow-sm text-center text-gray-500 bg-white/40 backdrop-blur-sm">
+          <p className="text-lg font-semibold">No data available</p>
+          <p className="text-sm text-gray-400 mt-1">
+            It seems there are no records yet for this pet.
+          </p>
+        </div>
       </div>
     );
 
@@ -223,76 +223,104 @@ export default function PetProfilePage() {
               letterSpacing: "0%",
             }}
           >
-            Health record
+            Health Record
           </h3>
 
-          <div className="bg-white mt-6 p-10 w-full rounded-t-xl">
-            <div
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5"
-              style={{
-                fontFamily: "Platypi, sans-serif",
-                fontSize: "24px",
-                lineHeight: "20px",
-                letterSpacing: "0%",
-              }}
-            >
-              {petRecords.map((rec, index) => (
-                <div
-                  key={rec.record_id || index}
-                  className="relative border-[1px] bg-white rounded-lg overflow-hidden"
-                  style={{
-                    boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
-                    borderColor: "#000000B2",
-                  }}
-                >
+          {petRecords && petRecords.length > 1 ? (
+            <div className="bg-white mt-6 p-10 w-full rounded-t-xl">
+              <div
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5"
+                style={{
+                  fontFamily: "Platypi, sans-serif",
+                  fontSize: "24px",
+                  lineHeight: "20px",
+                  letterSpacing: "0%",
+                }}
+              >
+                {petRecords.map((rec, index) => (
                   <div
-                    className="h-10 w-full"
+                    key={rec.record_id || index}
+                    className="relative border-[1px] bg-white rounded-lg overflow-hidden"
                     style={{
-                      background:
-                        index % 3 === 0
-                          ? "linear-gradient(to bottom, #FFBBBB 0%, rgba(153,112,112,0)100%)"
-                          : index % 3 === 1
-                          ? "linear-gradient(to bottom, #D8BFFF 0%, rgba(216,191,255,0)100%)"
-                          : "linear-gradient(to bottom, #B8FFBF 0%, rgba(111,153,115,0)100%)",
+                      boxShadow: "0 6px 12px rgba(0, 0, 0, 0.1)",
+                      borderColor: "#000000B2",
                     }}
-                  />
-                  <div className="-mt-11 p-4">
-                    <h4 className="font-bold text-xl mb-2">
-                      Medical History {index + 1}
-                    </h4>
-                    <p className="text-sm -mt-1">
-                      <b>Date:</b>{" "}
-                      {rec.visit_date
-                        ? new Date(rec.visit_date).toLocaleDateString()
-                        : "N/A"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Description:</b> {rec.description || "No description"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Veterinarian:</b> {rec.veterinarian_name || "Unknown"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Diagnosis:</b>{" "}
-                      {rec.primary_diagnosis || "No diagnosis"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Test Result:</b> {rec.test_results || "N/A"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Action:</b> {rec.key_action || "N/A"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Medication:</b> {rec.medication_given || "N/A"}
-                    </p>
-                    <p className="text-sm mb-10">
-                      <b>Remarks:</b> {rec.notes || "N/A"}
-                    </p>
+                  >
+                    <div
+                      className="h-10 w-full"
+                      style={{
+                        background:
+                          index % 3 === 0
+                            ? "linear-gradient(to bottom, #FFBBBB 0%, rgba(153,112,112,0)100%)"
+                            : index % 3 === 1
+                            ? "linear-gradient(to bottom, #D8BFFF 0%, rgba(216,191,255,0)100%)"
+                            : "linear-gradient(to bottom, #B8FFBF 0%, rgba(111,153,115,0)100%)",
+                      }}
+                    />
+                    <div className="-mt-11 p-4">
+                      <h4 className="font-bold text-xl mb-2">
+                        Medical History {index + 1}
+                      </h4>
+                      <p className="text-sm -mt-1">
+                        <b>Date:</b>{" "}
+                        {rec.visit_date
+                          ? new Date(rec.visit_date).toLocaleDateString()
+                          : "N/A"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Description:</b>{" "}
+                        {rec.description || "No description"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Veterinarian:</b>{" "}
+                        {rec.veterinarian_name || "Unknown"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Diagnosis:</b>{" "}
+                        {rec.primary_diagnosis || "No diagnosis"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Test Result:</b> {rec.test_results || "N/A"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Action:</b> {rec.key_action || "N/A"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Medication:</b> {rec.medication_given || "N/A"}
+                      </p>
+                      <p className="text-sm mb-10">
+                        <b>Remarks:</b> {rec.notes || "N/A"}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center bg-white mt-6 mb-10 p-16 w-full rounded-xl shadow-inner text-gray-500 animate-fadeIn">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 text-gray-400 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12h6m2 8H7a2 2 0 01-2-2V6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v10a2 2 0 01-2 2z"
+                />
+              </svg>
+              <h4 className="text-2xl font-semibold text-gray-700">
+                No Medical Records Yet
+              </h4>
+              <p className="text-md text-gray-500 mt-2">
+                Once your veterinarian adds medical history, it will appear
+                here.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

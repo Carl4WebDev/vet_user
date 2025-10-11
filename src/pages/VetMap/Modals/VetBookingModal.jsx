@@ -135,8 +135,11 @@ export default function VetBookingModal({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md relative border-2 border-black overflow-y-auto">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-[99999] overflow-y-auto">
+      <div
+        className="bg-white rounded-lg p-6 w-full max-w-md relative border-2 border-black shadow-lg
+                 overflow-y-auto max-h-[90vh]"
+      >
         {/* Close Button */}
         <button
           onClick={handleClosed}
@@ -234,20 +237,22 @@ export default function VetBookingModal({
 
           {/* Available Slots */}
           {availableSlots?.length > 0 ? (
-            availableSlots.map((slot, index) => (
-              <button
-                type="button"
-                key={index}
-                onClick={() => setSelectedSlot(slot)}
-                className={`px-3 py-1 rounded border ${
-                  selectedSlot?.start === slot.start
-                    ? "bg-cyan-500 text-white border-cyan-500"
-                    : "bg-gray-100 text-gray-700 border-gray-300"
-                }`}
-              >
-                {slot.start} - {slot.end}
-              </button>
-            ))
+            <div className="flex flex-wrap gap-2 mt-2">
+              {availableSlots.map((slot, index) => (
+                <button
+                  type="button"
+                  key={index}
+                  onClick={() => setSelectedSlot(slot)}
+                  className={`px-3 py-1 rounded border text-sm ${
+                    selectedSlot?.start === slot.start
+                      ? "bg-cyan-500 text-white border-cyan-500"
+                      : "bg-gray-100 text-gray-700 border-gray-300"
+                  }`}
+                >
+                  {slot.start} - {slot.end}
+                </button>
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-gray-500">No slots available</p>
           )}
