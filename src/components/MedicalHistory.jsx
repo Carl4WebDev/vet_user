@@ -1,7 +1,7 @@
 // components/MedicalHistory.jsx
 import { ArrowRight, TimerIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import navProfile from "../assets/nav-profile.png";
 export default function MedicalHistory({ pets }) {
   return (
     <div className="bg-white rounded p-4">
@@ -16,7 +16,7 @@ export default function MedicalHistory({ pets }) {
             >
               <div className="flex items-center gap-4">
                 <img
-                  src={pet.image_url || "/default-pet.png"} // fallback if no image
+                  src={pet.image_url || navProfile} // fallback if no image
                   alt={pet.name}
                   className="w-16 h-16 rounded-full object-cover"
                 />
