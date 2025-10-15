@@ -7,11 +7,11 @@ import navProfile from "../assets/nav-profile.png";
 import { clientNavItems } from "../config/navItems";
 import { useClient } from "../hooks/useClient";
 import { getAllClinics } from "../api/get-api/clinics/getClinicsService.js";
+import { getClientById } from "../api/get-api/client/getClientById.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
-const navProfileClient = localStorage.getItem("navProfileClient");
 
-// ✅ Socket connection (outside component to avoid reconnects)
+// ✅ Keep socket outside to prevent re-connection on every render
 const socket = io(`${API_BASE}`, {
   transports: ["websocket"],
   withCredentials: true,
@@ -20,6 +20,7 @@ const socket = io(`${API_BASE}`, {
 
 export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [clientData, setClientData] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -29,13 +30,12 @@ export default function ChatPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { client } = useClient();
+  const { client } = useClient(); // likely contains cached info
 
   useEffect(() => {
     const initializeChat = async () => {
       try {
         setLoading(true);
-
         const clientId = localStorage.getItem("client_id");
         if (!clientId) {
           setLoading(false);
@@ -44,31 +44,40 @@ export default function ChatPage() {
 
         setCurrentUser(clientId);
 
-        // ✅ Connect socket if not already connected
-        if (!socket.connected) {
-          socket.connect();
-        }
+        // ✅ Fetch full client details (to show name + avatar properly)
+        const response = await getClientById(clientId);
+        setClientData(response?.client || response || null);
 
-        // ✅ Register socket connection
-        const onConnect = () => {
+        // ✅ Connect socket
+        if (!socket.connected) socket.connect();
+
+        socket.on("connect", () => {
           socket.emit("registerUser", clientId);
           setIsConnected(true);
-        };
-        socket.on("connect", onConnect);
+        });
 
-        // ✅ Fetch clinics and build conversation list
+        // ✅ Fetch clinics for conversation list
         const clinics = await getAllClinics();
-        if (Array.isArray(clinics)) {
-          setUsers(clinics);
 
-          const userConversations = clinics.map((clinic) => ({
-            id: clinic.clinic_id,
-            name: clinic.clinic_name,
-            avatar: clinic.image_url || navProfile, // 🖼️ fallback if no image
-            lastMessage: "Start a conversation...",
-          }));
+        if (Array.isArray(clinics)) {
+          const userConversations = clinics.map((clinic) => {
+            // 🧩 Fix double slashes or missing slashes in image URLs
+            const imagePath = clinic.image_url?.startsWith("http")
+              ? clinic.image_url // already a full URL
+              : `${API_BASE}${clinic.image_url?.startsWith("/") ? "" : "/"}${
+                  clinic.image_url || ""
+                }`;
+
+            return {
+              id: clinic.clinic_id,
+              name: clinic.clinic_name,
+              avatar: imagePath || navProfile, // 🖼️ fallback if none
+              lastMessage: "Start a conversation...",
+            };
+          });
 
           setConversations(userConversations);
+          setUsers(clinics);
         } else {
           console.warn("⚠️ Unexpected clinic data format:", clinics);
           setConversations([]);
@@ -83,7 +92,7 @@ export default function ChatPage() {
 
     initializeChat();
 
-    // ✅ Cleanup
+    // ✅ Cleanup on unmount
     return () => {
       socket.off("connect");
       socket.disconnect();
@@ -138,10 +147,7 @@ export default function ChatPage() {
   };
 
   const sendMessage = () => {
-    if (!input.trim() || !activeChat || !currentUser || !isConnected) {
-      console.error("Cannot send message: missing data");
-      return;
-    }
+    if (!input.trim() || !activeChat || !currentUser || !isConnected) return;
 
     const newMsg = {
       senderId: currentUser,
@@ -160,9 +166,6 @@ export default function ChatPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading chat...</p>
-          <p className="text-sm text-gray-500">
-            User ID: {currentUser || "Not set"}
-          </p>
           <p className="text-sm text-gray-500">
             Socket: {isConnected ? "Connected" : "Disconnected"}
           </p>
@@ -192,13 +195,18 @@ export default function ChatPage() {
     );
   }
 
+  // ✅ Navbar — using updated API response
+  const profileImg =
+    clientData?.mainImageUrl || clientData?.client?.mainImageUrl || navProfile;
+  const username = clientData?.name || clientData?.client?.name || "Guest";
+
   // ✅ UI
   return (
     <div>
       <Navbar
         logo={navLogo}
-        profileImg={navProfileClient || navProfile}
-        username={client?.name}
+        profileImg={profileImg}
+        username={username}
         navItems={clientNavItems}
       />
 
@@ -213,9 +221,15 @@ export default function ChatPage() {
             Messages
           </div>
 
+          {/* Search */}
           <div className="p-3 border-b border-gray-200">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
                   className="h-5 w-5 text-gray-400"
                   fill="currentColor"
@@ -227,15 +241,11 @@ export default function ChatPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
+              </span>
             </div>
           </div>
 
+          {/* Conversation List */}
           <div className="flex-1 overflow-y-auto">
             {conversations.map((conv) => (
               <div
@@ -245,13 +255,11 @@ export default function ChatPage() {
                 }`}
                 onClick={() => selectConversation(conv)}
               >
-                <div className="flex-shrink-0">
-                  <img
-                    src={conv.avatar || navProfile}
-                    alt={conv.name}
-                    className="h-12 w-12 rounded-full object-cover border"
-                  />
-                </div>
+                <img
+                  src={conv.avatar}
+                  alt={conv.name}
+                  className="h-12 w-12 rounded-full object-cover border"
+                />
                 <div className="ml-3 min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {conv.name}
@@ -271,13 +279,11 @@ export default function ChatPage() {
             <>
               {/* Header */}
               <div className="flex items-center px-6 py-3 border-b border-gray-200 bg-white">
-                <div className="flex-shrink-0">
-                  <img
-                    src={activeChat.avatar || navProfile}
-                    alt={activeChat.name}
-                    className="h-10 w-10 rounded-full object-cover border"
-                  />
-                </div>
+                <img
+                  src={activeChat.avatar}
+                  alt={activeChat.name}
+                  className="h-10 w-10 rounded-full object-cover border"
+                />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-900">
                     {activeChat.name}
@@ -288,16 +294,10 @@ export default function ChatPage() {
 
               {/* Messages */}
               <div className="flex-1 p-4 overflow-y-auto bg-gray-100">
-                <div className="flex justify-center mb-4">
-                  <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
-                    Today
-                  </span>
-                </div>
-
                 {messages.length > 0 ? (
-                  messages.map((msg, index) => (
+                  messages.map((msg, i) => (
                     <div
-                      key={index}
+                      key={i}
                       className={`flex mb-4 ${
                         msg.senderId === currentUser
                           ? "justify-end"
@@ -312,8 +312,8 @@ export default function ChatPage() {
                         <img
                           src={
                             msg.senderId === currentUser
-                              ? navProfileClient || navProfile
-                              : activeChat.avatar || navProfile
+                              ? profileImg
+                              : activeChat.avatar
                           }
                           alt="Avatar"
                           className="h-8 w-8 rounded-full object-cover border"
@@ -408,10 +408,6 @@ export default function ChatPage() {
               </div>
               <h3 className="text-lg font-medium mb-1">Your messages</h3>
               <p className="text-sm">Select a conversation to start chatting</p>
-              <p className="text-xs mt-2">User ID: {currentUser}</p>
-              <p className="text-xs">
-                Status: {isConnected ? "Connected" : "Disconnected"}
-              </p>
             </div>
           )}
         </div>

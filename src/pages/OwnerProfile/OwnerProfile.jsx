@@ -54,7 +54,7 @@ export default function OwnerProfile() {
       <>
         <Navbar
           logo={NavLogo}
-          profileImg={user.imageUrl || NavProfile}
+          profileImg={user.mainImageUrl || NavProfile}
           username={client_name || "Guest"}
           navItems={clientNavItems}
         />
@@ -69,24 +69,41 @@ export default function OwnerProfile() {
     <>
       <Navbar
         logo={NavLogo}
-        profileImg={user.imageUrl || NavProfile}
-        username={client_name || "Guest"}
+        profileImg={user.mainImageUrl || NavProfile}
+        username={user?.name || "Guest"}
         navItems={clientNavItems}
       />
       <div className="bg-white shadow-lg w-full h-full mx-auto overflow-hidden border border-gray-300">
         {/* Banner */}
-        <div className="relative bg-[#5a5a5a] h-[200px] md:h-[250px] w-full">
+        {/* Banner Section */}
+        <div className="relative h-[200px] md:h-[250px] w-full overflow-hidden rounded-sm shadow-sm">
+          {/* 🖼️ Banner image with fallback */}
+          <img
+            src={user.backgroundImageUrl || NavProfile}
+            alt="Banner"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+            onError={(e) => (e.currentTarget.src = "/default-banner.png")}
+          />
+
+          {/* subtle overlay for contrast */}
+          <div className="absolute inset-0 bg-black/20"></div>
+
+          {/* ✏️ Edit button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="absolute top-3 right-3 bg-white text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-1 shadow"
+            className="absolute top-3 right-3 bg-white text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-1 shadow hover:bg-gray-100 transition"
           >
             <Pencil size={16} />
             Edit
           </button>
+
+          {/* ⚙️ Edit Modal */}
           <OwnerProfileEdit
             isOpen={isModalOpen}
             setIsOpen={setIsModalOpen}
             clientId={clientTableId}
+            mainImage={user.mainImageUrl}
+            bgImage={user.backgroundImageUrl}
           />
         </div>
 
@@ -95,7 +112,7 @@ export default function OwnerProfile() {
           <div className="relative flex flex-col items-start md:flex-row md:items-start gap-6 -mt-25 w-full">
             {/* Profile Image */}
             <img
-              src={user.imageUrl || NavProfile}
+              src={user.mainImageUrl || NavProfile}
               alt="Profile"
               className="w-[200px] h-[200px] md:w-[200px] md:h-[200px] rounded-full border-4 border-white shadow-lg object-cover"
             />
@@ -170,6 +187,7 @@ export default function OwnerProfile() {
           <div className="mt-6 w-full">
             <h3 className="font-medium text-xl mb-2">Bio</h3>
             <p className="text-gray-600 text-m w-full">{user.bio || "N/A"}</p>
+            {console.log(user)}
           </div>
 
           {/* Statistics */}

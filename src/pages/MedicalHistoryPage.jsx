@@ -184,8 +184,8 @@ export default function MedicalHistoryPage() {
     <>
       <Navbar
         logo={navLogo}
-        profileImg={navProfileClient || navProfile}
-        username={client_name}
+        profileImg={records[0]?.client_image_url || navProfile}
+        username={records[0]?.client_name}
         navItems={clientNavItems}
       />
       <div
@@ -320,6 +320,7 @@ export default function MedicalHistoryPage() {
 
               {/* Diagnosis */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-10">
+                {/* 🩺 Diagnosis and Assessment */}
                 <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
                   <h3 className="font-semibold mb-2 border-b">
                     Diagnosis and Assessment
@@ -337,10 +338,70 @@ export default function MedicalHistoryPage() {
                     {rec.overall_health || "N/A"}
                   </p>
                 </div>
+
+                {/* 🧾 Notes */}
                 <div className="p-4 rounded-lg shadow bg-[#f6f6f6]">
                   <h3 className="font-semibold mb-2 border-b">Notes</h3>
                   <p>{rec.description || rec.notes || "N/A"}</p>
                 </div>
+              </div>
+              {/* 🖼️ Document Attachments */}
+              <div className="p-4 rounded-lg shadow w-full bg-[#f6f6f6] mt-4">
+                <h3 className="font-semibold mb-2 border-b">
+                  Attached Documents
+                </h3>
+
+                {rec.documents && rec.documents.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {rec.documents.map((doc, docIndex) => {
+                      const ext = doc.file_name
+                        ? doc.file_name.split(".").pop().toLowerCase()
+                        : "";
+                      const isImage = [
+                        "jpg",
+                        "jpeg",
+                        "png",
+                        "gif",
+                        "webp",
+                      ].includes(ext);
+
+                      return (
+                        <div
+                          key={doc.document_id || docIndex}
+                          className="bg-white border rounded-lg overflow-hidden shadow-sm flex flex-col items-center p-2"
+                        >
+                          {isImage ? (
+                            <img
+                              src={doc.document_url}
+                              alt={doc.file_name || "Document"}
+                              className="w-full h-32 object-cover rounded-md"
+                            />
+                          ) : (
+                            <div className="flex flex-col justify-center items-center h-32 w-full bg-gray-100 rounded-md">
+                              <p className="text-gray-600 text-xs text-center px-2">
+                                {doc.file_name || "Document"}
+                              </p>
+                            </div>
+                          )}
+                          <a
+                            href={doc.document_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 text-xs mt-2 hover:underline"
+                          >
+                            View / Download
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex justify-center items-center h-32 bg-gray-100 rounded-md">
+                    <p className="text-gray-500 text-sm italic">
+                      No documents uploaded
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="p-4 flex justify-end w-full max-w-3xl">

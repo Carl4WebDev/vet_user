@@ -4,7 +4,13 @@ import { Link } from "react-router-dom";
 
 import NavLogo from "../../../assets/nav-logo.png";
 
-export default function VetClinicCard({ name, rating, address, onBook }) {
+export default function VetClinicCard({
+  mainImage,
+  name,
+  rating,
+  address,
+  onBook,
+}) {
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col sm:flex-row items-center gap-4 border border-gray-200">
       {/* Left Side Info */}
@@ -40,9 +46,9 @@ export default function VetClinicCard({ name, rating, address, onBook }) {
       {/* Right Side */}
       <div className="flex flex-col items-center gap-2">
         <img
-          src={NavLogo}
+          src={mainImage || NavLogo}
           alt={name}
-          className="rounded-xl w-28 h-20 object-cover"
+          className="rounded-md w-28 h-20 object-cover"
         />
         <button
           onClick={onBook}

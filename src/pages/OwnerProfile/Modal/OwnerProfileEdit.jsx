@@ -1,134 +1,150 @@
-import { useState } from "react";
-import { editClientById } from "../../../api/get-api/client/editClient";
-import navProfile from "../../../assets/nav-profile.png";
+import { useState, useEffect } from "react";
+import { editClientById } from "../../../api/get-api/client/editClientById";
+import navProfile from "../../../assets/nav-profile.png"; // default profile
+import defaultBanner from "../../../assets/nav-profile.png"; // make sure you have this file in /assets
 
-export default function OwnerProfileEdit({ isOpen, setIsOpen, clientId }) {
+export default function OwnerProfileEdit({
+  isOpen,
+  setIsOpen,
+  clientId,
+  mainImage,
+  bgImage,
+}) {
   const [formData, setFormData] = useState({
     client_name: "",
     gender: "",
     phone: "",
     tel_num: "",
     bio: "",
+    street: "",
+    city: "",
+    province: "",
+    postal_code: "",
   });
 
-  const [profileImage, setProfileImage] = useState("/profile.png");
-  const [bannerImage, setBannerImage] = useState(null);
+  // 🧠 For image previews and files
+  const [profilePreview, setProfilePreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [mainImageFile, setMainImageFile] = useState(null);
+  const [bannerImageFile, setBannerImageFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // 🧩 Initialize with passed images
+  useEffect(() => {
+    if (mainImage) setProfilePreview(mainImage);
+    if (bgImage) setBannerPreview(bgImage);
+  }, [mainImage, bgImage]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Instant profile image preview
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfileImage(reader.result);
-      reader.readAsDataURL(file);
+      setMainImageFile(file);
+      setProfilePreview(URL.createObjectURL(file)); // instant preview
     }
   };
 
+  // ✅ Instant banner image preview
   const handleBannerImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setBannerImage(reader.result);
-      reader.readAsDataURL(file);
+      setBannerImageFile(file);
+      setBannerPreview(URL.createObjectURL(file)); // instant preview
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
 
-    // Build full object first
-    const updatedClient = {
-      client_name: formData.client_name,
-      phone: formData.phone,
-      tel_num: formData.tel_num,
-      gender: formData.gender,
-      bio: formData.bio,
-    };
+    const payload = new FormData();
+    for (const [key, value] of Object.entries(formData)) {
+      if (value) payload.append(key, value);
+    }
 
-    // Remove fields that are empty, so backend won’t overwrite them
-    const filteredClient = Object.fromEntries(
-      Object.entries(updatedClient).filter(([_, value]) => value !== "")
-    );
+    if (mainImageFile) payload.append("main_image", mainImageFile);
+    if (bannerImageFile) payload.append("background_image", bannerImageFile);
 
     try {
-      const res = await editClientById(clientId, filteredClient);
+      const res = await editClientById(clientId, payload);
       console.log("✅ Client updated:", res);
       setIsOpen(false);
-      window.location.reload();
-    } catch (error) {
-      console.error("❌ Failed to update client:", error);
+      window.location.reload(); // refresh to reflect latest images
+    } catch (err) {
+      console.error("❌ Failed to update client:", err);
+      alert("Update failed. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent overflow-auto">
-      <div className="bg-[#D9D9D9] w-full max-w-[984px] max-h-[80vh] h-auto shadow-md border-[6px] border-black rounded-[20px] relative m-4 flex flex-col overflow-auto">
-        <form onSubmit={handleSubmit}>
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="absolute top-2 right-2 text-gray-600 hover:text-black"
-          >
-            ✕
-          </button>
-
-          {/* Top Section */}
-          <div className="flex flex-col items-center relative">
-            {/* Gray background with optional uploaded image */}
-            {bannerImage ? (
-              <img
-                src={navProfile}
-                alt="Banner"
-                className="absolute left-1/2 top-0 -translate-x-1/2 z-0 w-full md:w-[983px] h-[200px] md:h-[299px] rounded-[20px] object-cover"
-              />
-            ) : (
-              <div className="absolute left-1/2 top-0 -translate-x-1/2 z-0 bg-[#5A5A5A] border w-full md:w-[983px] h-[200px] md:h-[299px] rounded-[20px]" />
-            )}
-
-            <div className="absolute top-4 right-4 z-10 flex gap-2">
-              {/* Edit Banner Button */}
-              <button
-                onClick={() => document.getElementById("bannerUpload").click()}
-                className="bg-white hover:bg-gray-200 text-black text-sm p-2 rounded-full shadow-md"
-              ></button>
-
-              {/* Remove Banner Button */}
-              {bannerImage && (
-                <button
-                  onClick={() => setBannerImage(null)}
-                  className="bg-white hover:bg-gray-200 text-black text-sm p-2 rounded-full shadow-md"
-                ></button>
-              )}
-            </div>
-
-            {/* Hidden file input */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3">
+      <div
+        className="
+          bg-[#EDEDED]
+          w-full max-w-[880px]
+          rounded-[16px]
+          shadow-2xl
+          border border-gray-400
+          relative
+          flex flex-col
+          overflow-hidden
+          max-h-[85vh]
+        "
+      >
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col overflow-y-auto scroll-smooth"
+        >
+          {/* 🖼️ Banner Section */}
+          <div className="relative h-[180px] w-full flex-shrink-0 bg-[#5A5A5A]">
+            <img
+              src={bannerPreview || bgImage || defaultBanner}
+              alt="Banner Preview"
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-in-out"
+              onError={(e) => (e.currentTarget.src = defaultBanner)}
+            />
+            <button
+              type="button"
+              onClick={() => document.getElementById("bannerUpload").click()}
+              className="absolute top-3 right-3 bg-white text-gray-800 px-3 py-1 rounded-full shadow-md hover:bg-gray-100 text-sm font-medium transition"
+            >
+              Change Banner
+            </button>
             <input
-              type="file"
               id="bannerUpload"
+              type="file"
               accept="image/*"
               onChange={handleBannerImageChange}
               className="hidden"
             />
-            {/* Vector background */}
-            <img
-              src="./Vector.png"
-              alt="Vector Background"
-              className="w-[200px] h-[160px] md:w-[350.83px] md:h-[280.67px] object-cover absolute left-1/2 mt-2 -translate-x-1/2 z-0"
-            />
+          </div>
 
-            {/* Profile Image */}
-            <label className="relative z-10 cursor-pointer mt-4">
+          {/* ❌ Close Button */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="absolute top-3 right-3 bg-black/60 hover:bg-black text-white rounded-full p-1 px-2 text-lg font-bold"
+          >
+            ✕
+          </button>
+
+          {/* 🧑 Profile Image Section */}
+          <div className="flex justify-center -mt-14 mb-4">
+            <label className="relative group cursor-pointer">
               <img
-                src={profileImage}
-                alt=""
-                className="w-32 h-32 md:w-[300px] md:h-[300px] rounded-full border-2 bg-white border-white shadow-md object-cover"
+                src={profilePreview || mainImage || navProfile}
+                alt="Profile Preview"
+                className="w-[120px] h-[120px] rounded-full border-4 border-white shadow-md object-cover bg-gray-200 transition-all duration-300 ease-in-out"
+                onError={(e) => (e.currentTarget.src = navProfile)}
               />
               <input
                 type="file"
@@ -136,180 +152,136 @@ export default function OwnerProfileEdit({ isOpen, setIsOpen, clientId }) {
                 onChange={handleProfileImageChange}
                 className="hidden"
               />
-              {!profileImage.startsWith("data:") && (
-                <span className="absolute inset-0 flex items-center justify-center text-gray-700 font-semibold text-lg pointer-events-none">
-                  Upload photo
-                </span>
-              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs rounded-full transition">
+                Change
+              </div>
             </label>
           </div>
 
-          {/* Full Name */}
-          <div className="mt-5 text-center">
-            <label
-              htmlFor="fullName"
-              className="block mb-2 text-black text-2xl md:text-3xl font-playfair"
-            >
-              Full Name
-            </label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              value={formData.fullName || ""}
-              onChange={handleChange}
-              className="text-center mx-auto p-2 bg-white outline-none w-[90%] md:w-[300px] h-[45px] md:h-[50px] border rounded-[20px] text-lg md:text-2xl"
-              placeholder="Enter your name"
-            />
-          </div>
+          {/* 🧾 Form Fields */}
+          <div className="px-6 pb-6 flex-1">
+            <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800">
+              Edit Owner Profile
+            </h2>
 
-          {/* Form Fields */}
-          <div className="px-4 md:px-10 mt-6 space-y-5">
-            {/* Row 1 */}
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Full Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  name="client_name"
+                  value={formData.client_name}
+                  onChange={handleChange}
+                  placeholder="Enter full name"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
+                />
+              </div>
+
               {/* Gender */}
-              <div className="flex-1">
-                <label className="block mb-1 text-xl md:text-3xl font-playfair">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Gender
                 </label>
-
-                {/* Wrapper to hold select + icon */}
-                <div className="relative">
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="appearance-none w-full h-[60px] md:h-[90px] px-4 pr-10 md:text-lg"
-                    style={{
-                      borderRadius: "11px",
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                      opacity: 1,
-                      background:
-                        "linear-gradient(90deg, #AAFFA1 0%, rgba(120, 133, 153, 0) 10.1%, rgba(120, 133, 153, 0) 90%, #AAFFA1 100%)",
-                    }}
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-
-                  {/* Dropdown arrow icon */}
-                  <img
-                    src="./Gender_DropDown.png"
-                    alt="dropdown arrow"
-                    className="h-8 w-7 absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-                  />
-                </div>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-blue-400 outline-none"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
-            </div>
 
-            {/* Row 2 */}
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Phone Number */}
-              <div className="flex-1">
-                <label className="block mb-1 text-xl md:text-3xl font-playfair">
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Phone Number
                 </label>
                 <input
-                  type="text"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleChange}
-                  className="w-full h-[60px] md:h-[90px] px-4 md:text-lg"
-                  style={{
-                    borderRadius: "11px",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    opacity: 1,
-                    background:
-                      "linear-gradient(90deg, #FCFFC6 0%, rgba(120, 133, 153, 0) 10.1%, rgba(120, 133, 153, 0) 90%, #FCFFC6  100%)",
-                  }}
-                  placeholder="Phone Number"
+                  placeholder="Enter phone number"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
                 />
               </div>
 
-              {/* Tel Number */}
-              <div className="flex-1">
-                <label className="block mb-1 text-xl md:text-3xl font-playfair">
-                  Tel Number
+              {/* Tel */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Tel. Number
                 </label>
                 <input
-                  type="text"
-                  name="telNumber"
-                  value={formData.telNumber}
+                  name="tel_num"
+                  value={formData.tel_num}
                   onChange={handleChange}
-                  className="w-full h-[60px] md:h-[90px] px-4 md:text-lg"
-                  style={{
-                    borderRadius: "11px",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    opacity: 1,
-                    background:
-                      "linear-gradient(90deg, #DFA0FF 0%, rgba(120, 133, 153, 0) 10.1%, rgba(120, 133, 153, 0) 90%, #DFA0FF  100%)",
-                  }}
-                  placeholder="Tel Number"
+                  placeholder="Enter telephone number"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
                 />
               </div>
             </div>
 
-            {/* Row 3 */}
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Address */}
-              <div className="flex-1">
-                <label className="block mb-1 text-xl md:text-3xl font-playfair">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="w-full h-[60px] md:h-[90px] px-4 md:text-lg font-playfair"
-                  style={{
-                    borderRadius: "11px",
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    borderColor: "black",
-                    opacity: 1,
-                    background:
-                      "linear-gradient(90deg, #FFCC8E 0%, rgba(120, 133, 153, 0) 10.1%, rgba(120, 133, 153, 0) 90%, #FFCC8E 100%)",
-                  }}
-                  placeholder="Address"
-                />
-              </div>
+            {/* 🏠 Address Fields */}
+            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-2">
+              Address Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {["street", "city", "province", "postal_code"].map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1 capitalize">
+                    {field.replace("_", " ")}
+                  </label>
+                  <input
+                    name={field}
+                    value={formData[field]}
+                    onChange={handleChange}
+                    placeholder={`Enter ${field.replace("_", " ")}`}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 outline-none bg-white"
+                  />
+                </div>
+              ))}
             </div>
-          </div>
 
-          {/* Bio */}
-          <div className="px-4 md:px-10 mt-6">
-            <label className="block mb-2 text-xl md:text-3xl font-playfair">
-              Bio
-            </label>
-            <textarea
-              name="bio"
-              value={formData.bio} // ✅ bind value
-              onChange={handleChange} // ✅ update formData
-              className="w-full h-[150px] md:h-[276px] border rounded-[23px] p-2 bg-white resize-none outline-none"
-              placeholder="Write something about yourself..."
-            ></textarea>
-          </div>
+            {/* 🧠 Bio */}
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Bio
+              </label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Write something about yourself..."
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 outline-none resize-none bg-white h-[100px]"
+              />
+            </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 mt-6 px-4 md:px-10 pb-4">
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="w-[100px] md:w-[141px] h-[40px] md:h-[45px] rounded-[20px] bg-white border text-black hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="w-[100px] md:w-[141px] h-[40px] md:h-[45px] rounded-[20px] bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Confirm
-            </button>
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="px-5 py-2 border border-gray-400 rounded-md text-gray-700 hover:bg-gray-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`px-5 py-2 rounded-md text-white font-semibold transition-all ${
+                  submitting
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {submitting ? "Saving..." : "Confirm"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -40,8 +40,10 @@ export default function ClientDashboard() {
   }, [navigate, fetchClient]);
 
   useEffect(() => {
-    fetchGoingAppointments();
-  }, []);
+    if (client?.clientId) {
+      fetchGoingAppointments(client.clientId);
+    }
+  }, [client?.clientId, fetchGoingAppointments]);
 
   useEffect(() => {
     if (client?.clientId) {
@@ -69,7 +71,7 @@ export default function ClientDashboard() {
       <VetClinicChatbot />
       <Navbar
         logo={navLogo}
-        profileImg={client.imageUrl || navProfile}
+        profileImg={client.mainImageUrl || navProfile}
         username={client.name}
         navItems={clientNavItems}
       />
@@ -114,21 +116,47 @@ export default function ClientDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4">
         <div className="col-span-12 md:col-span-8 flex flex-col gap-4">
-          {appointments.map((appt, index) => (
-            <AppointmentCard
-              key={index}
-              vetName={appt.vet_name}
-              petName={appt.pet_name}
-              date={new Date(appt.date).toLocaleDateString("en-PH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-              time={`${appt.start_time} - ${appt.end_time}`}
-              image={appt.pet_image_url || Leo}
-              appointmentId={appt.appointment_id}
-            />
-          ))}
+          {appointments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center bg-white mt-4 mb-8 p-10 w-full rounded-xl shadow-inner text-gray-500 animate-fadeIn">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 text-gray-400 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <h4 className="text-2xl font-semibold text-gray-700">
+                No Appointments Yet
+              </h4>
+              <p className="text-md text-gray-500 mt-2 text-center max-w-[400px]">
+                Once you book an appointment with a veterinarian, it will appear
+                here.
+              </p>
+            </div>
+          ) : (
+            appointments.map((appt, index) => (
+              <AppointmentCard
+                key={index}
+                vetName={appt.vet_name}
+                petName={appt.pet_name}
+                date={new Date(appt.date).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+                time={`${appt.start_time} - ${appt.end_time}`}
+                image={appt.pet_image_url || Leo}
+                appointmentId={appt.appointment_id}
+              />
+            ))
+          )}
         </div>
 
         <div className="col-span-12 md:col-span-4 flex flex-col gap-4">

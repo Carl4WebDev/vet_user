@@ -1,17 +1,41 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { logoutClient } from "../api/authService";
-import { Navigate } from "react-router-dom";
 import { LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
-
-const client_table_name = localStorage.getItem("client_table_id");
+import { useState, useEffect } from "react";
 
 const Navbar = ({ logo, profileImg, username, navItems }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [clientTableId, setClientTableId] = useState(null); // ✅ state for ID
+
+  useEffect(() => {
+    // Wait for localStorage to populate (e.g., after register/login)
+    const storedId = localStorage.getItem("client_table_id");
+    if (storedId && storedId !== "undefined" && storedId !== "null") {
+      setClientTableId(storedId);
+    } else {
+      // optional retry — sometimes localStorage takes a tick to update
+      const timer = setTimeout(() => {
+        const retryId = localStorage.getItem("client_table_id");
+        if (retryId && retryId !== "undefined" && retryId !== "null") {
+          setClientTableId(retryId);
+        }
+      }, 300); // wait 300ms
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const handleLogout = () => {
     logoutClient();
-    Navigate("/");
+    navigate("/");
+  };
+
+  const handleProfileClick = (e) => {
+    if (!clientTableId) {
+      e.preventDefault(); // 🧱 block navigation
+      alert("Please wait — your profile is still loading...");
+      return;
+    }
   };
 
   return (
@@ -61,17 +85,23 @@ const Navbar = ({ logo, profileImg, username, navItems }) => {
           {/* Profile & Logout */}
           <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
             <Link
-              to={`/owner-profile/${client_table_name}`}
+              to={clientTableId ? `/owner-profile/${clientTableId}` : "#"}
+              onClick={handleProfileClick} // ✅ block if no ID yet
               className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0"
             >
               <img
                 src={profileImg}
-                className="h-12 w-12 md:h-10 md:w-10 rounded-full border border-gray-300 shadow-md"
+                className={`h-12 w-12 md:h-10 md:w-10 rounded-full border border-gray-300 shadow-md ${
+                  !clientTableId ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 alt="Profile"
               />
-
-              <h1 className="text-lg md:text-2xl font-semibold text-center md:text-left">
-                {username}
+              <h1
+                className={`text-lg md:text-2xl font-semibold text-center md:text-left ${
+                  !clientTableId ? "text-gray-400" : "text-black"
+                }`}
+              >
+                {username || "Loading..."}
               </h1>
             </Link>
             <LogOut

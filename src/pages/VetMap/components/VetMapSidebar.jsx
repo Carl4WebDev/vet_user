@@ -20,6 +20,7 @@ export default function VetMapSidebar({ vets, showList }) {
           {vets.map((vet, i) => (
             <VetClinicCard
               key={i}
+              mainImage={vet.image_url}
               name={vet.clinic_name}
               rating={vet.rating || 5}
               address={vet.address}

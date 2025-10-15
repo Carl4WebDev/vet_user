@@ -151,9 +151,7 @@ export default function VetBookingModal({
         <h2 className="text-sm font-light">Clinic</h2>
         <h3 className="font-bold mb-4">
           {clinicName || "Clinic"} -{" "}
-          <span className="text-[13px] font-light">
-            Closed during Saturday-Sunday
-          </span>
+          <span className="text-[13px] font-light">Closed during Sundays</span>
         </h3>
 
         <form className="space-y-3 z-[99999]" onSubmit={handleSubmit}>

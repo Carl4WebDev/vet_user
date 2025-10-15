@@ -66,7 +66,7 @@ export default function VetMap() {
     <>
       <Navbar
         logo={NavLogo}
-        profileImg={navProfileClient || NavProfile}
+        profileImg={client.mainImageUrl || NavProfile}
         username={client?.name || "Guest"}
         navItems={clientNavItems}
       />

@@ -9,6 +9,7 @@ import { clientNavItems } from "../config/navItems";
 import { getAppointmentById } from "../api/appointments/getAppointmentById";
 import { cancelAppointmentById } from "../api/appointments/cancelAppointmentById";
 import { ArrowLeft } from "lucide-react";
+import { getClientById } from "../api/get-api/client/getClientById";
 
 import VetRescheduleModal from "../components/VetRescheduleModal";
 const navProfileClient = localStorage.getItem("navProfileClient");
@@ -19,12 +20,30 @@ export default function AppointmentPage() {
   const [error, setError] = useState(null);
   const [rescheduleModal, setRescheduleModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger
+  const [clientData, setClientData] = useState(null);
+
+  useEffect(() => {
+    const fetchClient = async () => {
+      try {
+        const clientId = localStorage.getItem("client_id");
+        if (clientId) {
+          const res = await getClientById(clientId);
+          setClientData(res);
+        }
+      } catch (err) {
+        console.error("❌ Failed to fetch client for navbar:", err);
+      }
+    };
+
+    fetchClient();
+  }, []);
 
   const { appointmentId } = useParams(); // Get appointment ID from URL params
   const client_name = localStorage.getItem("client_name");
 
   const navigate = useNavigate();
 
+  console.log(clientData);
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
@@ -123,8 +142,10 @@ export default function AppointmentPage() {
       <div className="bg-[#d9d9d9] min-h-screen">
         <Navbar
           logo={navLogo}
-          profileImg={navProfileClient || navProfile}
-          username={client_name}
+          profileImg={
+            clientData?.client.mainImageUrl || navProfile || navProfileClient
+          }
+          username={clientData?.client.name || client_name}
           navItems={clientNavItems}
         />
         <div className="flex justify-center items-center h-64">
@@ -142,8 +163,10 @@ export default function AppointmentPage() {
       <div className="bg-[#d9d9d9] min-h-screen">
         <Navbar
           logo={navLogo}
-          profileImg={navProfileClient || navProfile}
-          username={client_name}
+          profileImg={
+            clientData?.client.mainImageUrl || navProfile || navProfileClient
+          }
+          username={clientData?.client.name || client_name}
           navItems={clientNavItems}
         />
         <div className="flex justify-center items-center h-64">
@@ -166,8 +189,10 @@ export default function AppointmentPage() {
     <div className="bg-[#d9d9d9] min-h-screen">
       <Navbar
         logo={navLogo}
-        profileImg={navProfileClient || navProfile}
-        username={client_name}
+        profileImg={
+          clientData?.client.mainImageUrl || navProfile || navProfileClient
+        }
+        username={clientData?.client.name || client_name}
         navItems={clientNavItems}
       />
       <div

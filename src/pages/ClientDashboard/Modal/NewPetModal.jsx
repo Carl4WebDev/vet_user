@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { usePets } from "../../../hooks/usePets";
 import { useClient } from "../../../hooks/useClient";
 
+import { addNewPetWithImage } from "../../../updated-api/addNewPetWithImage";
+
 import { useSuccess } from "../../../hooks/useSuccess";
 import { useError } from "../../../hooks/useError";
 
@@ -16,12 +18,24 @@ const NewPetModal = ({ isOpen, onClose }) => {
   const [birthdate, setBirthdate] = useState("");
   const [gender, setGender] = useState("");
 
+  const [mainImage, setMainImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+
   const { showSuccess } = useSuccess();
   const { showError } = useError();
 
   const { addPet } = usePets();
   const { client } = useClient();
   if (!isOpen) return null;
+
+  // 🧠 handle image change
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMainImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -37,14 +51,17 @@ const NewPetModal = ({ isOpen, onClose }) => {
     };
 
     try {
-      await addPet(petData);
+      await addNewPetWithImage(petData, mainImage);
       showSuccess("Pet added successfully! 🎉");
+      onClose();
+      // ✅ Refresh the page after success
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (err) {
       showError(err.message);
     }
-    onClose();
   };
-
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
       <div className="bg-white rounded-lg w-full max-w-2xl p-6 relative border-2 border-black max-h-[90vh] overflow-y-auto">
@@ -130,7 +147,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
             <select
               className="w-full border rounded px-3 py-2"
               value={gender}
-              onChange={(e) => setGender(e.target.value)}
+              onChange={(e) => setGender(e.target.value.toLowerCase())}
             >
               <option value="">Select gender</option>
               <option value="Male">Male</option>
@@ -138,6 +155,44 @@ const NewPetModal = ({ isOpen, onClose }) => {
             </select>
           </div>
         </form>
+        {/* Image Upload */}
+        <div className="flex flex-col items-center mt-4">
+          <label
+            htmlFor="imageUpload"
+            className="text-sm font-medium text-gray-700 mb-2"
+          >
+            Main Image
+          </label>
+
+          {/* Upload preview */}
+          <div className="relative w-32 h-32">
+            <input
+              id="imageUpload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="absolute inset-0 opacity-0 cursor-pointer z-10"
+            />
+            <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-all">
+              {preview ? (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-400 text-sm text-center px-2">
+                  Click to upload
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Optional filename display */}
+          {preview && (
+            <p className="mt-2 text-xs text-gray-500">Preview loaded</p>
+          )}
+        </div>
 
         {/* Save Button */}
         <button
