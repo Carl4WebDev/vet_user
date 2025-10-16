@@ -69,7 +69,7 @@ export default function ChatPage() {
                 }`;
 
             return {
-              id: clinic.clinic_id,
+              id: clinic.owner.user_id,
               name: clinic.clinic_name,
               avatar: imagePath || navProfile, // 🖼️ fallback if none
               lastMessage: "Start a conversation...",
@@ -138,6 +138,11 @@ export default function ChatPage() {
       return;
     }
 
+    // console.log("🔹 Client joining:", {
+    //   senderId: currentUser,
+    //   receiverId: conversation.id,
+    // });
+
     setActiveChat(conversation);
     socket.emit("joinPrivate", {
       senderId: currentUser,
@@ -148,7 +153,6 @@ export default function ChatPage() {
 
   const sendMessage = () => {
     if (!input.trim() || !activeChat || !currentUser || !isConnected) return;
-
     const newMsg = {
       senderId: currentUser,
       receiverId: activeChat.id,
