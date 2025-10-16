@@ -147,11 +147,11 @@ const NewPetModal = ({ isOpen, onClose }) => {
             <select
               className="w-full border rounded px-3 py-2"
               value={gender}
-              onChange={(e) => setGender(e.target.value.toLowerCase())}
+              onChange={(e) => setGender(e.target.value)}
             >
               <option value="">Select gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
             </select>
           </div>
         </form>
