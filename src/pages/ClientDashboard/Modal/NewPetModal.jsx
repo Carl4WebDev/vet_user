@@ -84,6 +84,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
               className="w-full border rounded px-3 py-2"
               value={petName}
               onChange={(e) => setPetName(e.target.value)}
+              required
             />
           </div>
 
@@ -106,6 +107,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
               className="w-full border rounded px-3 py-2"
               value={breed}
               onChange={(e) => setBreed(e.target.value)}
+              required
             />
           </div>
 
@@ -117,6 +119,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
               className="w-full border rounded px-3 py-2"
               value={age}
               onChange={(e) => setAge(e.target.value)}
+              required
             />
           </div>
           {/* weight */}
@@ -127,6 +130,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
               className="w-full border rounded px-3 py-2"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
+              required
             />
           </div>
 
@@ -138,6 +142,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
               className="w-full border rounded px-3 py-2"
               value={birthdate}
               onChange={(e) => setBirthdate(e.target.value)}
+              required
             />
           </div>
 
@@ -172,6 +177,7 @@ const NewPetModal = ({ isOpen, onClose }) => {
               accept="image/*"
               onChange={handleImageChange}
               className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              required
             />
             <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-all">
               {preview ? (

@@ -43,6 +43,7 @@ const VetClinicChatbot = () => {
     startX: 0,
     startY: 0,
     dragging: false,
+    tapStart: 0,
   });
 
   useEffect(() => {
@@ -84,13 +85,14 @@ const VetClinicChatbot = () => {
     dragRef.current.startX = clientX;
     dragRef.current.startY = clientY;
     dragRef.current.dragging = false;
+    dragRef.current.tapStart = Date.now();
 
     // ✅ Remove previous listeners first
     cleanupDragListeners();
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchmove", handleTouchMove);
     document.addEventListener("touchend", endDrag);
   };
 
@@ -98,8 +100,8 @@ const VetClinicChatbot = () => {
     const deltaX = Math.abs(clientX - dragRef.current.startX);
     const deltaY = Math.abs(clientY - dragRef.current.startY);
 
-    // If moved enough, consider it a drag (not a tap)
-    if (deltaX > 5 || deltaY > 5) {
+    // 📱 Raise drag threshold so small finger moves don't count as drag
+    if (deltaX > 15 || deltaY > 15) {
       dragRef.current.dragging = true;
     }
 
@@ -114,11 +116,15 @@ const VetClinicChatbot = () => {
     setIconPos({ x: boundedX, y: boundedY });
   };
 
-  const endDrag = (e) => {
-    cleanupDragListeners(); // ✅ Prevent duplicate handlers
+  const endDrag = () => {
+    cleanupDragListeners();
 
-    // 🖐 If no drag happened → treat as click
-    if (!dragRef.current.dragging) {
+    // 🧠 Detect short taps (under 200ms)
+    const tapDuration = Date.now() - (dragRef.current.tapStart || 0);
+    const isQuickTap = tapDuration < 200;
+
+    // 🖐 If no drag happened or it’s a quick tap → toggle
+    if (!dragRef.current.dragging || isQuickTap) {
       setIsOpen((prev) => !prev);
     }
   };
@@ -139,7 +145,6 @@ const VetClinicChatbot = () => {
     startDrag(touch.clientX, touch.clientY);
   };
   const handleTouchMove = (e) => {
-    e.preventDefault();
     const touch = e.touches[0];
     doDrag(touch.clientX, touch.clientY);
   };
@@ -175,7 +180,7 @@ const VetClinicChatbot = () => {
           top: iconPos.y,
           left: iconPos.x,
           zIndex: 60,
-          touchAction: "none", // important for mobile dragging
+          // ❌ Removed touchAction: "none" – allows taps on mobile
         }}
       >
         <div className="bg-blue-600 hover:bg-blue-700 text-white p-3 sm:p-4 rounded-full shadow-lg transition">

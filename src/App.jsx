@@ -11,6 +11,7 @@ import OwnerProfile from "./pages/OwnerProfile/OwnerProfile";
 import NotificationPage from "./pages/NotificationPage";
 import MedicalHistory from "./components/MedicalHistory";
 import MedicalHistoryPage from "./pages/MedicalHistoryPage";
+import VetClinicChatbot from "./components/VetClinicChatbot";
 
 // Create a separate component for the routed content
 function AppContent() {
@@ -109,6 +110,7 @@ export default function App() {
   return (
     <Router>
       <AppContent />
+      <VetClinicChatbot />
     </Router>
   );
 }

@@ -12,8 +12,6 @@ import MedicalHistory from "../../components/MedicalHistory";
 import Leo from "../../assets/leo.png";
 import { PlusIcon } from "lucide-react";
 
-import VetClinicChatbot from "../../components/VetClinicChatbot";
-
 import { useAppointment } from "../../hooks/useAppointment.js";
 import { useClient } from "../../hooks/useClient";
 import { usePets } from "../../hooks/usePets";
@@ -68,7 +66,6 @@ export default function ClientDashboard() {
   if (!client) return <p>No client data found.</p>;
   return (
     <div className="bg-[#b4b4b7] min-h-screen">
-      <VetClinicChatbot />
       <Navbar
         logo={navLogo}
         profileImg={client.mainImageUrl || navProfile}

@@ -14,8 +14,6 @@ import { PetsProvider } from "../src/context/pets/PetsProvider.jsx";
 import { ScheduleProvider } from "./context/Appointments/ScheduleProvider.jsx";
 import { AppointmentTypesProvider } from "./context/AppointmentTypes/AppointmentTypesProvider.jsx";
 
-import VetClinicChatbot from "./components/VetClinicChatbot.jsx";
-
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ClientProvider>
@@ -27,7 +25,6 @@ createRoot(document.getElementById("root")).render(
                 <ErrorModal />
                 <SuccessModal />
                 <App />
-                <VetClinicChatbot />
               </AppointmentTypesProvider>
             </ScheduleProvider>
           </PetsProvider>
