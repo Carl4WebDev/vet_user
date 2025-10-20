@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // ✅ Added useRef
 import { io } from "socket.io-client";
 
 import Navbar from "../components/Navbar";
@@ -26,11 +26,13 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [users, setUsers] = useState([]);
-
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const { client } = useClient(); // likely contains cached info
+
+  // ✅ Added: Reference to bottom of message list
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -44,7 +46,7 @@ export default function ChatPage() {
 
         setCurrentUser(clientId);
 
-        // ✅ Fetch full client details (to show name + avatar properly)
+        // ✅ Fetch client details
         const response = await getClientById(clientId);
         setClientData(response?.client || response || null);
 
@@ -56,14 +58,12 @@ export default function ChatPage() {
           setIsConnected(true);
         });
 
-        // ✅ Fetch clinics for conversation list
+        // ✅ Fetch clinics for sidebar
         const clinics = await getAllClinics();
-
         if (Array.isArray(clinics)) {
           const userConversations = clinics.map((clinic) => {
-            // 🧩 Fix double slashes or missing slashes in image URLs
             const imagePath = clinic.image_url?.startsWith("http")
-              ? clinic.image_url // already a full URL
+              ? clinic.image_url
               : `${API_BASE}${clinic.image_url?.startsWith("/") ? "" : "/"}${
                   clinic.image_url || ""
                 }`;
@@ -71,11 +71,10 @@ export default function ChatPage() {
             return {
               id: clinic.owner.user_id,
               name: clinic.clinic_name,
-              avatar: imagePath || navProfile, // 🖼️ fallback if none
+              avatar: imagePath || navProfile,
               lastMessage: "Start a conversation...",
             };
           });
-
           setConversations(userConversations);
           setUsers(clinics);
         } else {
@@ -132,16 +131,16 @@ export default function ChatPage() {
     };
   }, [isConnected, currentUser]);
 
+  // ✅ Auto-scroll to bottom when messages change or chat changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, activeChat]);
+
   const selectConversation = (conversation) => {
     if (!currentUser || !isConnected) {
       console.error("Cannot select conversation: socket not ready");
       return;
     }
-
-    // console.log("🔹 Client joining:", {
-    //   senderId: currentUser,
-    //   receiverId: conversation.id,
-    // });
 
     setActiveChat(conversation);
     socket.emit("joinPrivate", {
@@ -199,12 +198,10 @@ export default function ChatPage() {
     );
   }
 
-  // ✅ Navbar — using updated API response
   const profileImg =
     clientData?.mainImageUrl || clientData?.client?.mainImageUrl || navProfile;
   const username = clientData?.name || clientData?.client?.name || "Guest";
 
-  // ✅ UI
   return (
     <div>
       <Navbar
@@ -278,7 +275,7 @@ export default function ChatPage() {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col h-full">
           {activeChat ? (
             <>
               {/* Header */}
@@ -356,10 +353,13 @@ export default function ChatPage() {
                     No messages yet. Start the conversation!
                   </div>
                 )}
+
+                {/* ✅ Scroll anchor */}
+                <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
-              <div className="bg-white border-t border-gray-200 p-4">
+              {/* ✅ Sticky Input (always visible) */}
+              <div className="bg-white border-t border-gray-200 p-4 sticky bottom-0">
                 <div className="flex items-center">
                   <input
                     type="text"
