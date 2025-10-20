@@ -28,8 +28,9 @@ export default function ChatPage() {
   const [users, setUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(""); // ✅ Added
 
-  const { client } = useClient(); // likely contains cached info
+  const { client } = useClient();
 
   // ✅ Added: Reference to bottom of message list
   const messagesEndRef = useRef(null);
@@ -91,7 +92,6 @@ export default function ChatPage() {
 
     initializeChat();
 
-    // ✅ Cleanup on unmount
     return () => {
       socket.off("connect");
       socket.disconnect();
@@ -162,7 +162,6 @@ export default function ChatPage() {
     setInput("");
   };
 
-  // ✅ Loading state
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100">
@@ -202,6 +201,11 @@ export default function ChatPage() {
     clientData?.mainImageUrl || clientData?.client?.mainImageUrl || navProfile;
   const username = clientData?.name || clientData?.client?.name || "Guest";
 
+  // ✅ Filter clinics by search term
+  const filteredConversations = conversations.filter((conv) =>
+    conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
       <Navbar
@@ -222,12 +226,14 @@ export default function ChatPage() {
             Messages
           </div>
 
-          {/* Search */}
+          {/* ✅ Search input (connected to state) */}
           <div className="p-3 border-b border-gray-200">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search conversations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search clinics..."
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -246,31 +252,39 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* Conversation List */}
+          {/* ✅ Filtered Conversation List */}
           <div className="flex-1 overflow-y-auto">
-            {conversations.map((conv) => (
-              <div
-                key={conv.id}
-                className={`flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
-                  activeChat?.id === conv.id ? "bg-blue-50" : "hover:bg-gray-50"
-                }`}
-                onClick={() => selectConversation(conv)}
-              >
-                <img
-                  src={conv.avatar}
-                  alt={conv.name}
-                  className="h-12 w-12 rounded-full object-cover border"
-                />
-                <div className="ml-3 min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {conv.name}
-                  </p>
-                  <p className="text-sm text-gray-500 truncate">
-                    {conv.lastMessage}
-                  </p>
+            {filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className={`flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
+                    activeChat?.id === conv.id
+                      ? "bg-blue-50"
+                      : "hover:bg-gray-50"
+                  }`}
+                  onClick={() => selectConversation(conv)}
+                >
+                  <img
+                    src={conv.avatar}
+                    alt={conv.name}
+                    className="h-12 w-12 rounded-full object-cover border"
+                  />
+                  <div className="ml-3 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {conv.name}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {conv.lastMessage}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-6 text-sm">
+                No matching clinics
+              </p>
+            )}
           </div>
         </div>
 
@@ -358,7 +372,7 @@ export default function ChatPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* ✅ Sticky Input (always visible) */}
+              {/* ✅ Sticky Input */}
               <div className="bg-white border-t border-gray-200 p-4 sticky bottom-0">
                 <div className="flex items-center">
                   <input
