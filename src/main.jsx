@@ -14,22 +14,26 @@ import { PetsProvider } from "../src/context/pets/PetsProvider.jsx";
 import { ScheduleProvider } from "./context/Appointments/ScheduleProvider.jsx";
 import { AppointmentTypesProvider } from "./context/AppointmentTypes/AppointmentTypesProvider.jsx";
 
+import { ChatProvider } from "./context/ChatContext.jsx";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ClientProvider>
-      <ErrorProvider>
-        <SuccessProvider>
-          <PetsProvider>
-            <ScheduleProvider>
-              <AppointmentTypesProvider>
-                <ErrorModal />
-                <SuccessModal />
-                <App />
-              </AppointmentTypesProvider>
-            </ScheduleProvider>
-          </PetsProvider>
-        </SuccessProvider>
-      </ErrorProvider>
-    </ClientProvider>
+    <ChatProvider>
+      <ClientProvider>
+        <ErrorProvider>
+          <SuccessProvider>
+            <PetsProvider>
+              <ScheduleProvider>
+                <AppointmentTypesProvider>
+                  <ErrorModal />
+                  <SuccessModal />
+                  <App />
+                </AppointmentTypesProvider>
+              </ScheduleProvider>
+            </PetsProvider>
+          </SuccessProvider>
+        </ErrorProvider>
+      </ClientProvider>
+    </ChatProvider>
   </StrictMode>
 );

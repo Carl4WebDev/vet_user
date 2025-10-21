@@ -9,6 +9,8 @@ import { useClient } from "../hooks/useClient";
 import { getAllClinics } from "../api/get-api/clinics/getClinicsService.js";
 import { getClientById } from "../api/get-api/client/getClientById.js";
 
+import { useChat } from "../context/ChatContext.jsx";
+
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 // ✅ Keep socket outside to prevent re-connection on every render
@@ -28,12 +30,22 @@ export default function ChatPage() {
   const [users, setUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); // ✅ Added
+  const [searchTerm, setSearchTerm] = useState("");
+  const { unreadCounts, setUnreadCounts, totalUnread } = useChat();
 
   const { client } = useClient();
 
-  // ✅ Added: Reference to bottom of message list
+  // ✅ Reference to bottom of message list
   const messagesEndRef = useRef(null);
+
+  // ✅ Persist unread counts safely
+  useEffect(() => {
+    try {
+      localStorage.setItem("unreadCounts", JSON.stringify(unreadCounts));
+    } catch (err) {
+      console.warn("⚠️ Could not store unreadCounts:", err);
+    }
+  }, [unreadCounts]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -76,8 +88,25 @@ export default function ChatPage() {
               lastMessage: "Start a conversation...",
             };
           });
+
           setConversations(userConversations);
           setUsers(clinics);
+
+          // ✅ Client-side fix: join all clinic rooms safely
+          const joinedRooms = new Set();
+          clinics.forEach((clinic) => {
+            const roomId = clinic.owner?.user_id;
+            if (!roomId || joinedRooms.has(roomId)) return;
+            joinedRooms.add(roomId);
+            try {
+              socket.emit("joinPrivate", {
+                senderId: clientId,
+                receiverId: roomId,
+              });
+            } catch (err) {
+              console.warn("⚠️ Failed to join room:", roomId, err);
+            }
+          });
         } else {
           console.warn("⚠️ Unexpected clinic data format:", clinics);
           setConversations([]);
@@ -109,9 +138,11 @@ export default function ChatPage() {
 
     const handleReceiveMessage = (message) => {
       if (!message) return;
+
       setMessages((prev) => [...prev, message]);
 
       if (message.senderId !== currentUser) {
+        // ✅ Update conversation preview
         setConversations((prev) =>
           prev.map((conv) =>
             conv.id === message.senderId
@@ -119,6 +150,12 @@ export default function ChatPage() {
               : conv
           )
         );
+
+        // ✅ Increment unread count globally
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [message.senderId]: (prev[message.senderId] || 0) + 1,
+        }));
       }
     };
 
@@ -131,7 +168,7 @@ export default function ChatPage() {
     };
   }, [isConnected, currentUser]);
 
-  // ✅ Auto-scroll to bottom when messages change or chat changes
+  // ✅ Auto-scroll when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeChat]);
@@ -143,15 +180,29 @@ export default function ChatPage() {
     }
 
     setActiveChat(conversation);
-    socket.emit("joinPrivate", {
-      senderId: currentUser,
-      receiverId: conversation.id,
-    });
+
+    // ✅ Join this room explicitly (safe even if already joined)
+    try {
+      socket.emit("joinPrivate", {
+        senderId: currentUser,
+        receiverId: conversation.id,
+      });
+    } catch (err) {
+      console.warn("⚠️ joinPrivate failed:", err);
+    }
+
     setMessages([]);
+
+    // ✅ Reset unread count when opening conversation
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [conversation.id]: 0,
+    }));
   };
 
   const sendMessage = () => {
     if (!input.trim() || !activeChat || !currentUser || !isConnected) return;
+
     const newMsg = {
       senderId: currentUser,
       receiverId: activeChat.id,
@@ -201,7 +252,6 @@ export default function ChatPage() {
     clientData?.mainImageUrl || clientData?.client?.mainImageUrl || navProfile;
   const username = clientData?.name || clientData?.client?.name || "Guest";
 
-  // ✅ Filter clinics by search term
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -226,7 +276,7 @@ export default function ChatPage() {
             Messages
           </div>
 
-          {/* ✅ Search input (connected to state) */}
+          {/* Search input */}
           <div className="p-3 border-b border-gray-200">
             <div className="relative">
               <input
@@ -252,7 +302,7 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* ✅ Filtered Conversation List */}
+          {/* ✅ Conversation List with unread badges */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length > 0 ? (
               filteredConversations.map((conv) => (
@@ -265,11 +315,18 @@ export default function ChatPage() {
                   }`}
                   onClick={() => selectConversation(conv)}
                 >
-                  <img
-                    src={conv.avatar}
-                    alt={conv.name}
-                    className="h-12 w-12 rounded-full object-cover border"
-                  />
+                  <div className="relative">
+                    <img
+                      src={conv.avatar}
+                      alt={conv.name}
+                      className="h-12 w-12 rounded-full object-cover border"
+                    />
+                    {unreadCounts[conv.id] > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5">
+                        {unreadCounts[conv.id]}
+                      </span>
+                    )}
+                  </div>
                   <div className="ml-3 min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {conv.name}
@@ -368,11 +425,11 @@ export default function ChatPage() {
                   </div>
                 )}
 
-                {/* ✅ Scroll anchor */}
+                {/* Scroll anchor */}
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* ✅ Sticky Input */}
+              {/* Input */}
               <div className="bg-white border-t border-gray-200 p-4 sticky bottom-0">
                 <div className="flex items-center">
                   <input
