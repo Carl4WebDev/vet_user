@@ -409,58 +409,50 @@ export default function ChatPage() {
               {/* Messages */}
               <div className="flex-1 p-4 overflow-y-auto bg-gray-100">
                 {messages.length > 0 ? (
-                  messages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`flex mb-4 ${
-                        msg.senderId === currentUser
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
-                    >
+                  messages.map((msg, i) => {
+                    const isClient =
+                      Number(msg.senderId) === Number(currentUser); // ✅ Safe comparison
+                    return (
                       <div
-                        className={`flex max-w-xs lg:max-w-md ${
-                          msg.senderId === currentUser ? "flex-row-reverse" : ""
+                        key={i}
+                        className={`flex mb-4 ${
+                          isClient ? "justify-end" : "justify-start"
                         }`}
                       >
-                        <img
-                          src={
-                            msg.senderId === currentUser
-                              ? profileImg
-                              : activeChat.avatar
-                          }
-                          alt="Avatar"
-                          className="h-8 w-8 rounded-full object-cover border"
-                        />
                         <div
-                          className={`${
-                            msg.senderId === currentUser ? "mr-2" : "ml-2"
+                          className={`flex max-w-xs lg:max-w-md ${
+                            isClient ? "flex-row-reverse" : ""
                           }`}
                         >
-                          <div
-                            className={`px-4 py-2 rounded-lg ${
-                              msg.senderId === currentUser
-                                ? "bg-indigo-600 text-white"
-                                : "bg-white text-gray-800 border border-gray-200"
-                            }`}
-                          >
-                            <p className="text-sm">{msg.text}</p>
+                          <img
+                            src={isClient ? profileImg : activeChat.avatar}
+                            alt="Avatar"
+                            className="h-8 w-8 rounded-full object-cover border"
+                          />
+                          <div className={`${isClient ? "mr-2" : "ml-2"}`}>
+                            <div
+                              className={`px-4 py-2 rounded-lg ${
+                                isClient
+                                  ? "bg-indigo-600 text-white" // ✅ You (pet owner)
+                                  : "bg-gray-200 text-gray-800" // ✅ Clinic
+                              }`}
+                            >
+                              <p className="text-sm">{msg.text}</p>
+                            </div>
+                            <p
+                              className={`text-xs text-gray-500 mt-1 ${
+                                isClient ? "text-right" : "text-left"
+                              }`}
+                            >
+                              {msg.timestamp
+                                ? new Date(msg.timestamp).toLocaleTimeString()
+                                : new Date().toLocaleTimeString()}
+                            </p>
                           </div>
-                          <p
-                            className={`text-xs text-gray-500 mt-1 ${
-                              msg.senderId === currentUser
-                                ? "text-right"
-                                : "text-left"
-                            }`}
-                          >
-                            {msg.timestamp
-                              ? new Date(msg.timestamp).toLocaleTimeString()
-                              : new Date().toLocaleTimeString()}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center text-gray-500 py-8">
                     No messages yet. Start the conversation!
