@@ -26,7 +26,13 @@ export default function ClientLogin() {
       await loginClient(email, password);
       navigate("/client-dashboard");
     } catch (err) {
-      showError("Invalid credentials — Try 'Forgot Password'?");
+      // ✅ Check if backend sent a message
+      const backendMessage =
+        err?.response?.data?.message || // from your controller
+        err?.message || // fallback
+        "Invalid credentials — Try 'Forgot Password'?"; // default
+
+      showError(backendMessage);
     }
   };
 
