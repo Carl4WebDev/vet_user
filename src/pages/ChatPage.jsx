@@ -9,6 +9,8 @@ import { useClient } from "../hooks/useClient";
 import { getAllClinics } from "../api/get-api/clinics/getClinicsService.js";
 import { getClientById } from "../api/get-api/client/getClientById.js";
 
+import { postReport } from "../updated-api/postReport.js";
+
 import { useChat } from "../context/ChatContext.jsx";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -32,6 +34,12 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { unreadCounts, setUnreadCounts, totalUnread } = useChat();
+
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState(null);
+  const [reportText, setReportText] = useState("");
+  const [reportImages, setReportImages] = useState([]);
 
   const { client } = useClient();
 
@@ -308,32 +316,66 @@ export default function ChatPage() {
               filteredConversations.map((conv) => (
                 <div
                   key={conv.id}
-                  className={`flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
                     activeChat?.id === conv.id
                       ? "bg-blue-50"
                       : "hover:bg-gray-50"
                   }`}
-                  onClick={() => selectConversation(conv)}
                 >
-                  <div className="relative">
-                    <img
-                      src={conv.avatar}
-                      alt={conv.name}
-                      className="h-12 w-12 rounded-full object-cover border"
-                    />
-                    {unreadCounts[conv.id] > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5">
-                        {unreadCounts[conv.id]}
-                      </span>
-                    )}
+                  <div
+                    className="flex items-center flex-1"
+                    onClick={() => selectConversation(conv)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={conv.avatar}
+                        alt={conv.name}
+                        className="h-12 w-12 rounded-full object-cover border"
+                      />
+                      {unreadCounts[conv.id] > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5">
+                          {unreadCounts[conv.id]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="ml-3 min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {conv.name}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {conv.lastMessage}
+                      </p>
+                    </div>
                   </div>
-                  <div className="ml-3 min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {conv.name}
-                    </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {conv.lastMessage}
-                    </p>
+
+                  {/* ⚙️ Three-dot dropdown for reporting */}
+                  <div className="relative">
+                    <button
+                      className="text-gray-500 hover:text-gray-700 px-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDropdownOpen(
+                          dropdownOpen === conv.id ? null : conv.id
+                        );
+                      }}
+                    >
+                      ⋮
+                    </button>
+
+                    {dropdownOpen === conv.id && (
+                      <div className="absolute right-0 mt-2 bg-white border rounded shadow-md w-32 z-50">
+                        <button
+                          onClick={() => {
+                            setDropdownOpen(null);
+                            setReportTarget(conv);
+                            setIsReportModalOpen(true);
+                          }}
+                          className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                        >
+                          Report Clinic
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -487,6 +529,96 @@ export default function ChatPage() {
           )}
         </div>
       </div>
+      {isReportModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
+            <h2 className="text-lg font-semibold mb-4">
+              Report {reportTarget?.name}
+            </h2>
+
+            <textarea
+              placeholder="Write your report reason..."
+              className="w-full border rounded p-2 mb-3"
+              rows={4}
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+            />
+
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => {
+                const files = Array.from(e.target.files);
+                setReportImages((prev) => [...prev, ...files]);
+              }}
+              className="mb-3"
+            />
+
+            {reportImages.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {reportImages.map((img, index) => {
+                  const imgURL = URL.createObjectURL(img);
+                  return (
+                    <div key={index} className="relative group">
+                      <img
+                        src={imgURL}
+                        alt={`preview-${index}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <button
+                        onClick={() =>
+                          setReportImages((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                        className="absolute top-1 right-1 bg-black bg-opacity-60 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                onClick={() => setIsReportModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!reportText.trim())
+                    return alert("Please enter a reason.");
+                  try {
+                    const data = await postReport({
+                      reported_user_id: reportTarget.id, // clinic being reported
+                      reporter_user_id: currentUser, // pet owner ID
+                      evidence_text: reportText,
+                      evidence_images: reportImages,
+                    });
+
+                    alert(data.message || "✅ Report submitted successfully!");
+                    setIsReportModalOpen(false);
+                    setReportText("");
+                    setReportImages([]);
+                  } catch (err) {
+                    console.error("Report submission failed:", err);
+                    alert(err.message || "Failed to submit report");
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
