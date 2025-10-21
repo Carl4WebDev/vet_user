@@ -1,7 +1,6 @@
 import React from "react";
 import { MapPin, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-
 import NavLogo from "../../../assets/nav-logo.png";
 
 export default function VetClinicCard({
@@ -10,6 +9,7 @@ export default function VetClinicCard({
   rating,
   address,
   onBook,
+  isOnline, // ✅ added
 }) {
   return (
     <div className="bg-white rounded-2xl shadow-md p-4 flex flex-col sm:flex-row items-center gap-4 border border-gray-200">
@@ -17,7 +17,12 @@ export default function VetClinicCard({
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-mono font-bold">{name}</h2>
-          <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+          {/* ✅ dynamic status indicator */}
+          <span
+            className={`w-3 h-3 rounded-full ${
+              isOnline ? "bg-green-500" : "bg-red-500"
+            }`}
+          ></span>
         </div>
 
         {/* Rating */}

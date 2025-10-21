@@ -4,6 +4,14 @@ import VetBookingModal from "../Modals/VetBookingModal";
 
 export default function VetMapSidebar({ vets, showList }) {
   const [selectedClinic, setSelectedClinic] = useState(null);
+  console.log(vets);
+
+  const isClinicOnline = (vet) => {
+    if (vet.is_active) return true;
+    const createdAt = new Date(vet.created_at);
+    const diffMinutes = (Date.now() - createdAt.getTime()) / 60000;
+    return diffMinutes < 30; // treat new clinics (<30 mins old) as online
+  };
 
   return (
     <>
@@ -24,6 +32,7 @@ export default function VetMapSidebar({ vets, showList }) {
               name={vet.clinic_name}
               rating={vet.rating || 5}
               address={vet.address}
+              isOnline={isClinicOnline(vet)} // ✅ frontend-only logic
               onBook={() => setSelectedClinic(vet)}
             />
           ))}
