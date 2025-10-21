@@ -13,6 +13,7 @@ import { useError } from "../../hooks/useError";
 import PetProfileEdit from "./Modal/PetProfileEdit";
 
 import { getClientById } from "../../api/get-api/client/getClientById";
+import { Link } from "react-router-dom";
 
 import Leo from "../../assets/leo.png";
 
@@ -208,7 +209,6 @@ export default function PetProfilePage() {
         >
           Health Record
         </h3>
-
         {pet.medical_records && pet.medical_records.length > 0 ? (
           <div className="bg-white mt-6 p-6 rounded-xl">
             <div
@@ -235,38 +235,40 @@ export default function PetProfilePage() {
                           : "linear-gradient(to bottom, #B8FFBF 0%, rgba(111,153,115,0)100%)",
                     }}
                   />
-                  <div className="-mt-11 p-4">
-                    <h4 className="font-bold text-lg mb-1">
-                      Medical History {index + 1}
-                    </h4>
-                    <p className="text-sm">
-                      <b>Date:</b>{" "}
-                      {rec.date
-                        ? new Date(rec.date).toLocaleDateString()
-                        : "N/A"}
-                    </p>
-                    <p className="text-sm">
-                      <b>Description:</b> {rec.description}
-                    </p>
-                    <p className="text-sm">
-                      <b>Veterinarian:</b> {rec.veterinarian}
-                    </p>
-                    <p className="text-sm">
-                      <b>Diagnosis:</b> {rec.diagnosis}
-                    </p>
-                    <p className="text-sm">
-                      <b>Test Result:</b> {rec.test_results}
-                    </p>
-                    <p className="text-sm">
-                      <b>Action:</b> {rec.key_action}
-                    </p>
-                    <p className="text-sm">
-                      <b>Medication:</b> {rec.medication}
-                    </p>
-                    <p className="text-sm mb-3">
-                      <b>Remarks:</b> {rec.notes}
-                    </p>
-                  </div>
+                  <Link to={`/medical-history/${petId}`}>
+                    <div className="-mt-11 p-4">
+                      <h4 className="font-bold text-lg mb-1">
+                        Medical History {index + 1}
+                      </h4>
+                      <p className="text-sm">
+                        <b>Date:</b>{" "}
+                        {rec.date
+                          ? new Date(rec.date).toLocaleDateString()
+                          : "N/A"}
+                      </p>
+                      <p className="text-sm">
+                        <b>Description:</b> {rec.description}
+                      </p>
+                      <p className="text-sm">
+                        <b>Veterinarian:</b> {rec.veterinarian}
+                      </p>
+                      <p className="text-sm">
+                        <b>Diagnosis:</b> {rec.diagnosis}
+                      </p>
+                      <p className="text-sm">
+                        <b>Test Result:</b> {rec.test_results}
+                      </p>
+                      <p className="text-sm">
+                        <b>Action:</b> {rec.key_action}
+                      </p>
+                      <p className="text-sm">
+                        <b>Medication:</b> {rec.medication}
+                      </p>
+                      <p className="text-sm mb-3">
+                        <b>Remarks:</b> {rec.notes}
+                      </p>
+                    </div>
+                  </Link>
                 </div>
               ))}
             </div>
