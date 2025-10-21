@@ -4,9 +4,7 @@ import { registerClient } from "../api/authService";
 import InputField from "../components/Forms/InputField";
 import SelectField from "../components/Forms/SelectedField";
 import AddressModal from "../components/Forms/AddressModal";
-
 import { useError } from "../hooks/useError";
-
 import SigninBg from "../assets/signinbg.png";
 import navLogo from "../assets/nav-logo.png";
 
@@ -15,6 +13,8 @@ export default function ClientRegister() {
   const { showError } = useError();
 
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -43,6 +43,11 @@ export default function ClientRegister() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!accepted) {
+      setShowTermsModal(true);
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       showError("Passwords do not match");
       return;
@@ -50,12 +55,8 @@ export default function ClientRegister() {
 
     try {
       const data = await registerClient({ ...form, address });
-
-      // ✅ Save token & role to localStorage (Auto-login)
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
-
-      // ✅ Redirect straight to dashboard
       navigate("/client-dashboard");
     } catch (err) {
       showError(err.message);
@@ -67,7 +68,6 @@ export default function ClientRegister() {
       className="w-full h-full lg:h-screen bg-cover bg-center"
       style={{ backgroundImage: `url(${SigninBg})` }}
     >
-      {/* Header */}
       <header className="bg-gray-200 flex items-center gap-2 px-6 py-3 mb-10">
         <img src={navLogo} alt="VetConnect Logo" className="w-10 h-10" />
         <h1 className="text-2xl font-bold -translate-y-1">
@@ -155,14 +155,20 @@ export default function ClientRegister() {
               <input
                 type="checkbox"
                 id="tos"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
                 required
                 className="accent-blue-500"
               />
               <label htmlFor="tos" className="text-black">
                 Yes, I agree to the{" "}
-                <a href="#" className="text-blue-400 underline">
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="text-blue-400 underline"
+                >
                   Terms of Service
-                </a>
+                </button>
               </label>
             </div>
 
@@ -188,6 +194,90 @@ export default function ClientRegister() {
         address={address}
         setAddress={setAddress}
       />
+
+      {/* 📜 Terms & Conditions Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+          <div className="bg-white max-w-3xl max-h-[80vh] overflow-y-auto rounded-lg shadow-xl p-6 relative">
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              VetConnect Terms & Conditions
+            </h2>
+            <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
+              Welcome to VetConnect, a digital platform designed to streamline
+              veterinary practice management and enhance pet-owner healthcare
+              engagement. By accessing or using the VetConnect System you
+              acknowledge that you have read, understood, and agreed to comply
+              with these Terms and Conditions, including our Privacy Policy, in
+              compliance with the Data Privacy Act of 2012 (Republic Act No.
+              10173). If you do not agree with any of the provisions herein, you
+              are advised to discontinue use of the Application. VetConnect
+              provides services that include electronic health records
+              management for pets, appointment scheduling and reminders, secure
+              communication between veterinary clinics and pet owners, access to
+              medical history and treatment notes, as well as business
+              intelligence dashboards for veterinary practices. These services
+              are intended solely for lawful purposes relating to veterinary
+              care and practice management. As a user of the Application, you
+              agree to provide accurate and up-to-date information at all times,
+              to maintain the confidentiality of your login credentials, and to
+              use the System responsibly and lawfully. You further agree not to
+              misuse the Application in any way, including but not limited to
+              unauthorized access, data manipulation, or any activity that may
+              compromise the integrity of the platform. VetConnect is fully
+              committed to protecting the privacy and confidentiality of its
+              users in accordance with the Data Privacy Act of 2012. By using
+              the System, you give explicit consent to the collection and
+              processing of your personal information and sensitive personal
+              information. Data collected will be limited only to what is
+              necessary for veterinary care, appointment management,
+              communication, and analytics. All collected information will be
+              securely stored with appropriate encryption and access controls.
+              Information will not be shared with third parties without your
+              consent, except with authorized veterinary staff or as required by
+              law. You retain the right to access, update, correct, or request
+              deletion of your personal information, consistent with the
+              provisions of RA 10173. While the Application provides tools to
+              support communication and record-keeping, VetConnect does not
+              provide direct veterinary advice and is not liable for any
+              misdiagnosis, treatment errors, or medical outcomes. The accuracy
+              of all information entered into the System is the sole
+              responsibility of the user. All content, software, design
+              elements, and intellectual property within the VetConnect
+              Application are the exclusive property of VetConnect. These may
+              not be copied, modified, distributed, or used in any form without
+              prior written consent from the company. We reserve the right to
+              suspend or terminate user accounts that violate these Terms and
+              Conditions, engage in fraudulent or illegal activity, or
+              compromise the security of the platform. Additionally, VetConnect
+              may update or amend these Terms and Conditions at any time. Users
+              will be notified of significant changes through email or in-app
+              notifications, and continued use of the Application after such
+              updates will constitute acceptance of the revised terms. These
+              Terms and Conditions shall be governed by the laws of the Republic
+              of the Philippines, including the Data Privacy Act of 2012 and its
+              implementing rules and regulations.
+            </p>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setAccepted(true);
+                  setShowTermsModal(false);
+                }}
+                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700"
+              >
+                I Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
