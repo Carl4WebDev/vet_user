@@ -7,56 +7,62 @@ import navProfile from "../assets/nav-profile.png";
 import { clientNavItems } from "../config/navItems";
 import { getClientById } from "../api/get-api/client/getClientById";
 
+// ✅ Import the shared API fetcher
+import { getClientAnnouncements } from "../updated-api/getClientAnnouncements";
+
 export default function NotificationPage() {
   const [clientData, setClientData] = useState(null);
+  const [notifications, setNotifications] = useState([]); // ✅ now dynamic
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchClient = async () => {
+    const fetchData = async () => {
       try {
         const clientId = localStorage.getItem("client_id");
         if (!clientId) throw new Error("Client ID not found in localStorage");
 
+        // 🧩 Fetch client info
         const response = await getClientById(clientId);
         setClientData(response?.client || response || null);
+
+        // 🧩 Fetch announcements from backend
+        const announcements = await getClientAnnouncements();
+
+        // ✅ Filter: show only published ones (and optionally for pet owners)
+        const filtered = announcements.filter(
+          (a) =>
+            a.status === "Published" &&
+            (a.target_role_id === 1 || a.target_role_id === null)
+        );
+
+        // ✅ Format data to fit existing UI
+        const formatted = filtered.map((a) => ({
+          id: a.announcement_id,
+          title: a.title,
+          message: a.content,
+          date: new Date(a.created_at).toLocaleDateString("en-PH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+        }));
+
+        setNotifications(formatted);
       } catch (err) {
-        console.error("❌ Failed to fetch client data:", err);
+        console.error("❌ Failed to fetch notifications:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClient();
+    fetchData();
   }, []);
 
-  // ✅ Safely unwrap
   const profileImg =
     clientData?.mainImageUrl || clientData?.client?.mainImageUrl || navProfile;
   const username = clientData?.name || clientData?.client?.name || "Guest";
-
-  // Dummy notifications for now
-  const notifications = [
-    {
-      id: 1,
-      title: "System Update",
-      message: "We will have scheduled maintenance on Sept 25, 2025, 2:00 AM.",
-      date: "Sept 18, 2025",
-    },
-    {
-      id: 2,
-      title: "Welcome!",
-      message: "Thank you for using our veterinary system. 🐾",
-      date: "Sept 10, 2025",
-    },
-    {
-      id: 3,
-      title: "New Feature",
-      message: "Booking reminders are now available in your profile.",
-      date: "Sept 5, 2025",
-    },
-  ];
 
   // ✅ Handle loading/error UI
   if (loading) {
@@ -109,21 +115,26 @@ export default function NotificationPage() {
           </div>
 
           <div className="space-y-4">
-            {notifications.map((notif) => (
-              <div
-                key={notif.id}
-                className="p-4 rounded-lg border border-gray-200 shadow-sm bg-gray-50 hover:shadow-md transition-all"
-              >
-                <div className="flex justify-between items-start">
-                  <h2 className="font-semibold text-gray-800">{notif.title}</h2>
-                  <button className="text-gray-400 hover:text-gray-600 transition">
-                    <X size={16} />
-                  </button>
+            {notifications.length === 0 ? (
+              <p className="text-gray-500 text-center py-6">
+                No announcements available.
+              </p>
+            ) : (
+              notifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  className="p-4 rounded-lg border border-gray-200 shadow-sm bg-gray-50 hover:shadow-md transition-all"
+                >
+                  <div className="flex justify-between items-start">
+                    <h2 className="font-semibold text-gray-800">
+                      {notif.title}
+                    </h2>
+                  </div>
+                  <p className="text-gray-600 text-sm mt-1">{notif.message}</p>
+                  <p className="text-xs text-gray-400 mt-2">{notif.date}</p>
                 </div>
-                <p className="text-gray-600 text-sm mt-1">{notif.message}</p>
-                <p className="text-xs text-gray-400 mt-2">{notif.date}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
