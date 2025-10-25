@@ -119,8 +119,7 @@ export default function VetBookingModal({
       setNotes("");
       onClose();
     } catch (err) {
-      console.error("Booking failed:", err);
-      showError("Failed to book appointment. Try again.");
+      showError(err.message || "Failed to book appointment. Try again.");
     }
   };
 
