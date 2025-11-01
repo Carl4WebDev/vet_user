@@ -8,6 +8,7 @@ import { clientNavItems } from "../config/navItems";
 import { useClient } from "../hooks/useClient";
 import { getAllClinics } from "../api/get-api/clinics/getClinicsService.js";
 import { getClientById } from "../api/get-api/client/getClientById.js";
+import { getAllFreelanceVets } from "../api/get-api/getAllFreelanceVets.js";
 
 import { postReport } from "../updated-api/postReport.js";
 
@@ -79,10 +80,15 @@ export default function ChatPage() {
           setIsConnected(true);
         });
 
-        // ✅ Fetch clinics for sidebar
+        // ✅ Fetch clinics
         const clinics = await getAllClinics();
-        if (Array.isArray(clinics)) {
-          const userConversations = clinics.map((clinic) => {
+
+        // ✅ Fetch freelance veterinarians too
+        const freelanceVets = await getAllFreelanceVets();
+
+        if (Array.isArray(clinics) || Array.isArray(freelanceVets)) {
+          // 🏥 Clinic list
+          const clinicConversations = (clinics || []).map((clinic) => {
             const imagePath = clinic.image_url?.startsWith("http")
               ? clinic.image_url
               : `${API_BASE}${clinic.image_url?.startsWith("/") ? "" : "/"}${
@@ -94,16 +100,40 @@ export default function ChatPage() {
               name: clinic.clinic_name,
               avatar: imagePath || navProfile,
               lastMessage: "Start a conversation...",
+              type: "clinic",
             };
           });
 
-          setConversations(userConversations);
-          setUsers(clinics);
+          // 🧑‍⚕️ Veterinarian list
+          const vetConversations = (freelanceVets || []).map((vet) => {
+            const imagePath = vet.image_url?.startsWith("http")
+              ? vet.image_url
+              : `${API_BASE}${vet.image_url?.startsWith("/") ? "" : "/"}${
+                  vet.image_url || ""
+                }`;
 
-          // ✅ Client-side fix: join all clinic rooms safely
+            return {
+              id: vet.user_id, // ✅ user_id from veterinarians table
+              name: vet.vet_name,
+              avatar: imagePath || navProfile,
+              lastMessage: "Start a conversation...",
+              type: "vet",
+            };
+          });
+
+          // ✅ Combine both safely
+          const combinedConversations = [
+            ...clinicConversations,
+            ...vetConversations,
+          ];
+
+          setConversations(combinedConversations);
+          setUsers(combinedConversations);
+
+          // ✅ Join all rooms (clinics + vets)
           const joinedRooms = new Set();
-          clinics.forEach((clinic) => {
-            const roomId = clinic.owner?.user_id;
+          combinedConversations.forEach((entity) => {
+            const roomId = entity.id;
             if (!roomId || joinedRooms.has(roomId)) return;
             joinedRooms.add(roomId);
             try {
@@ -116,7 +146,10 @@ export default function ChatPage() {
             }
           });
         } else {
-          console.warn("⚠️ Unexpected clinic data format:", clinics);
+          console.warn("⚠️ Unexpected data format:", {
+            clinics,
+            freelanceVets,
+          });
           setConversations([]);
         }
       } catch (error) {
@@ -328,7 +361,7 @@ export default function ChatPage() {
                   >
                     <div className="relative">
                       <img
-                        src={conv.avatar}
+                        src={conv.avatar || navProfile}
                         alt={conv.name}
                         className="h-12 w-12 rounded-full object-cover border"
                       />
@@ -394,7 +427,7 @@ export default function ChatPage() {
               {/* Header */}
               <div className="flex items-center px-6 py-3 border-b border-gray-200 bg-white">
                 <img
-                  src={activeChat.avatar}
+                  src={activeChat.avatar || navProfile}
                   alt={activeChat.name}
                   className="h-10 w-10 rounded-full object-cover border"
                 />
@@ -554,7 +587,7 @@ export default function ChatPage() {
                   return (
                     <div key={index} className="relative group">
                       <img
-                        src={imgURL}
+                        src={imgURL || navProfile}
                         alt={`preview-${index}`}
                         className="w-full h-24 object-cover rounded border"
                       />
