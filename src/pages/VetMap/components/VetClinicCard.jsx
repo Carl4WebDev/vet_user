@@ -39,7 +39,11 @@ export default function VetClinicCard({
         <div className="flex items-center text-sm text-gray-600 mt-1">
           <MapPin size={14} className="mr-1 text-cyan-600" />
           <span>
-            {address.street}, {address.city}, {address.province}
+            {address
+              ? `${address.street || "N/A"}, ${address.city || ""}, ${
+                  address.province || ""
+                }`
+              : "N/A"}
           </span>
         </div>
 

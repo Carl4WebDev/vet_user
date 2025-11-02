@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import VetClinicCard from "./VetClinicCard";
 import VetBookingModal from "../Modals/VetBookingModal";
+import FreelanceBookingModal from "../Modals/FreelanceBookingModal";
 
-export default function VetMapSidebar({ vets, showList }) {
-  const [selectedClinic, setSelectedClinic] = useState(null);
-  console.log(vets);
+export default function VetMapSidebar({ vets, showList, isFreelance }) {
+  const [selectedVet, setSelectedVet] = useState(null);
 
   const isClinicOnline = (vet) => {
     if (vet.is_active) return true;
     const createdAt = new Date(vet.created_at);
     const diffMinutes = (Date.now() - createdAt.getTime()) / 60000;
-    return diffMinutes < 30; // treat new clinics (<30 mins old) as online
+    return diffMinutes < 30;
   };
 
   return (
@@ -21,33 +21,48 @@ export default function VetMapSidebar({ vets, showList }) {
         }`}
         style={{ maxHeight: "100vh" }}
       >
-        <h2 className="text-xl font-bold mb-4">Nearby Veterinaries</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {isFreelance ? "Veterinarian Freelancers" : "Nearby Veterinaries"}
+        </h2>
 
-        {/* Vet List */}
         <div className="bg-white shadow-lg rounded-lg p-4 space-y-4">
           {vets.map((vet, i) => (
             <VetClinicCard
               key={i}
               mainImage={vet.image_url}
-              name={vet.clinic_name}
+              name={isFreelance ? vet.vet_name : vet.clinic_name}
               rating={vet.rating || 5}
-              address={vet.address}
-              isOnline={isClinicOnline(vet)} // ✅ frontend-only logic
-              onBook={() => setSelectedClinic(vet)}
+              address={
+                isFreelance
+                  ? {
+                      street: "Freelance Veterinarian",
+                      city: "N/A",
+                      province: "Philippines",
+                    }
+                  : vet.address
+              }
+              isOnline={isClinicOnline(vet)}
+              onBook={() => setSelectedVet(vet)}
             />
           ))}
         </div>
       </div>
 
-      {/* Single Booking Modal */}
-      {selectedClinic && (
-        <VetBookingModal
-          clinicName={selectedClinic.name}
-          clinicId={selectedClinic.clinic_id}
-          isOpen={!!selectedClinic}
-          onClose={() => setSelectedClinic(null)}
-        />
-      )}
+      {selectedVet &&
+        (isFreelance ? (
+          <FreelanceBookingModal
+            vet={selectedVet}
+            isOpen={!!selectedVet}
+            onClose={() => setSelectedVet(null)}
+          />
+        ) : (
+          <VetBookingModal
+            clinicName={selectedVet.name}
+            clinicId={selectedVet.clinic_id}
+            isOpen={!!selectedVet}
+            onClose={() => setSelectedVet(null)}
+          />
+        ))}
     </>
   );
 }
