@@ -7,7 +7,8 @@ export async function bookFreelanceAppointment(appointmentData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(appointmentData),
     });
-    if (!res.ok) throw new Error("Failed to book appointment");
+    if (!res.ok)
+      throw new Error("Failed to book appointment. Check the date and time.");
     return await res.json();
   } catch (err) {
     console.error("❌ Freelance booking error:", err);

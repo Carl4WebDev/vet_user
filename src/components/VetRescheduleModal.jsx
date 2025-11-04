@@ -99,7 +99,9 @@ export default function VetRescheduleModal({
       handleClosed();
     } catch (err) {
       console.error("Reschedule failed:", err);
-      showError("Failed to reschedule. Please try again.");
+      showError(
+        "Failed to reschedule. Please try again. Check the date and time."
+      );
     } finally {
       setSubmitting(false);
     }
