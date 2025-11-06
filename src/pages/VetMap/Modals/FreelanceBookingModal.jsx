@@ -123,6 +123,12 @@ export default function FreelanceBookingModal({ vet, isOpen, onClose }) {
                 className="border rounded px-2 py-1"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                // ✅ This version uses local time, not UTC
+                min={
+                  new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+                    .toISOString()
+                    .split("T")[0]
+                }
               />
             </div>
           </div>
