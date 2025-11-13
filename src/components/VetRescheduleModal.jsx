@@ -82,18 +82,30 @@ export default function VetRescheduleModal({
 
     try {
       setSubmitting(true);
-      await rescheduleAppointment(appointment.appointment_id, {
+
+      const updated = await rescheduleAppointment(appointment.appointment_id, {
         date: selectedDate,
         start_time: selectedSlot.start,
         end_time: selectedSlot.end,
         notes,
       });
 
+      console.log("🔍 API RESPONSE:", updated);
+
       showSuccess("✅ Appointment rescheduled successfully!");
 
-      // Call the success callback if provided
+      // Build FULL updated appointment object
+      const updatedAppointment = {
+        ...appointment, // all existing details stay intact
+        ...updated?.appointment, // apply backend-updated fields
+        date: selectedDate, // ensure formatted date is used
+        start_time: selectedSlot.start,
+        end_time: selectedSlot.end,
+        notes,
+      };
+
       if (onRescheduleSuccess) {
-        onRescheduleSuccess();
+        onRescheduleSuccess(updatedAppointment);
       }
 
       handleClosed();

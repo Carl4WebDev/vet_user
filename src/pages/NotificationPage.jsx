@@ -48,7 +48,12 @@ export default function NotificationPage() {
           }),
         }));
 
-        setNotifications(formatted);
+        const localNotifs =
+          JSON.parse(localStorage.getItem("client_local_notifications")) || [];
+
+        const allNotifs = [...localNotifs, ...formatted];
+
+        setNotifications(allNotifs);
       } catch (err) {
         console.error("❌ Failed to fetch notifications:", err);
         setError(err.message);
@@ -58,6 +63,11 @@ export default function NotificationPage() {
     };
 
     fetchData();
+  }, []);
+
+  // ✅ Clear the notification badge ONLY after the page finishes loading
+  useEffect(() => {
+    localStorage.setItem("notif_count", "0");
   }, []);
 
   const profileImg =

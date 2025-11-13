@@ -132,9 +132,47 @@ export default function AppointmentPage() {
     return parts.length > 0 ? parts.join(", ") : null;
   };
 
-  // Function to trigger refresh after successful rescheduling
-  const handleRescheduleSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1); // Increment to trigger useEffect
+  const handleRescheduleSuccess = (updatedAppointment) => {
+    console.log("🔥 handleRescheduleSuccess CALLED", updatedAppointment);
+
+    // Update local appointment immediately
+    if (updatedAppointment) {
+      setAppointment(updatedAppointment);
+    }
+
+    // Force a refresh fetch
+    setRefreshTrigger((prev) => prev + 1);
+
+    const notifSource = {
+      ...appointment, // keep original full data
+      ...updatedAppointment, // override updated fields only
+    };
+
+    const notifications =
+      JSON.parse(localStorage.getItem("client_local_notifications")) || [];
+
+    notifications.unshift({
+      id: Date.now(),
+      title: "Appointment Rescheduled",
+      message: `Your appointment for ${
+        notifSource.pet_name
+      } has been rescheduled to ${formatDate(notifSource.date)} at ${formatTime(
+        notifSource.start_time
+      )}.`,
+      date: new Date().toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+    });
+
+    localStorage.setItem(
+      "client_local_notifications",
+      JSON.stringify(notifications)
+    );
+
+    localStorage.setItem("notif_count", notifications.length.toString());
+    navigate("/notifications");
   };
 
   if (loading) {
@@ -293,12 +331,6 @@ export default function AppointmentPage() {
 
         {/* Actions */}
         <div className="mt-6 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
-          <button
-            onClick={handleCancelAppointment}
-            className="py-2 px-4 bg-red-400 text-white rounded hover:bg-red-500 transition"
-          >
-            Cancel Appointment
-          </button>
           <button
             onClick={() => setRescheduleModal(true)}
             className="py-2 px-4 bg-blue-400 text-white rounded hover:bg-blue-500 transition"

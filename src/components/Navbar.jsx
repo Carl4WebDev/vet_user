@@ -3,6 +3,7 @@ import { logoutClient } from "../api/authService";
 import { LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useChat } from "../context/ChatContext"; // ✅ Global chat context import
+const notifCount = parseInt(localStorage.getItem("notif_count")) || 0;
 
 const Navbar = ({ logo, profileImg, username, navItems }) => {
   const navigate = useNavigate();
@@ -90,6 +91,14 @@ const Navbar = ({ logo, profileImg, username, navItems }) => {
                     totalUnread > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 min-w-[18px] text-center shadow">
                         {totalUnread > 99 ? "99+" : totalUnread}
+                      </span>
+                    )}
+
+                  {/* 🔵 Notification badge (localStorage) */}
+                  {label?.toLowerCase() === "notifications" &&
+                    notifCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 min-w-[18px] text-center shadow">
+                        {notifCount > 99 ? "99+" : notifCount}
                       </span>
                     )}
                 </div>
